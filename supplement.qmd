@@ -14,7 +14,7 @@ author:
     affiliation: "Meta Reality Labs Research"
     orcid: "0009-0001-6683-6826"
   - name: "Lisa A. Ostrin"
-    affiliation: "University of Houston, Texas, USA"
+    affiliation: "University of Houston College of Optometry, USA"
     orcid: "0000-0001-8675-1478"
   - name: "Manuel Spitschan"
     affiliation: 
@@ -44,16 +44,6 @@ execute:
   echo: true
   warning: false
 ---
-
-::: {.callout-warning}
-
-Please note that this supplement is not in its final styling form, as it necessarily has to be formatted as a `notebook` to enable commenting. Current issues include:
-
-- Cross-references not working (e.g. Figure labeling and referencing figures)
-
-These issues will be resolved when all comments have been gathered and implemented
-
-:::
 
 ## Abstract {.unnumbered}
 

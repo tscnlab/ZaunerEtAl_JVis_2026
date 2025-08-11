@@ -119,7 +119,9 @@ After these preprocessing steps, the `Clouclip` dataset had no irregular timesta
 
 The `VEET` illuminance data underwent a similar cleaning procedure. To make the `VEET`’s 2-second illuminance data more comparable to the `Clouclip`’s and to reduce computational load, we aggregated the illuminance time series to 5-second intervals. We then inserted explicit missing entries for any gaps and removed days with more than one hour of missing illuminance data. After cleaning, six days of `VEET` illuminance data with good coverage remained for analysis (see Supplementary Material for details).
 
-Finally, for spectral analysis, we imported the `VEET`’s spectral sensor modality. This required additional processing: the raw spectral data consists of counts from 10 wavelength-specific channels (approximately 415 nm through 940 nm, plus two broadband clear channels and a dark channel) along with a sensor gain setting. We aggregated the spectral data to 5-minute intervals to focus on broader trends and reduce data volume. Each channel’s counts were normalized by the appropriate gain at each moment, and the two clear channels were averaged. Using a calibration matrix provided by the manufacturer (specific to the spectral sensor model), we reconstructed full spectral power distributions for each 5-minute interval. The end result is a list-column in the dataset where each entry is the estimated spectral irradiance across wavelengths for that time interval. (Detailed spectral preprocessing steps, including the calibration and normalization, are provided in the [Supplement](https://tscnlab.github.io/ZaunerEtAl_JVis_2025/supplement-preview.html).) After spectral reconstruction, the dataset was ready for calculating example spectrum-based metrics.
+Finally, for spectral analysis, we imported the `VEET`’s spectral sensor modality, and, for the distance analysis, the time-of-flight modality. This required additional processing: the raw spectral data consists of counts from 10 wavelength-specific channels (approximately 415 nm through 940 nm, plus two broadband clear channels and a dark channel) along with a sensor gain setting. We aggregated the spectral data to 5-minute intervals to focus on broader trends and reduce data volume. Each channel’s counts were normalized by the appropriate gain at each moment, and the two clear channels were averaged. Using a calibration matrix provided by the manufacturer (specific to the spectral sensor model), we reconstructed full spectral power distributions for each 5-minute interval. The end result is a list-column in the dataset where each entry is the estimated spectral irradiance across wavelengths for that time interval. (Detailed spectral preprocessing steps, including the calibration and normalization, are provided in the [Supplement](https://tscnlab.github.io/ZaunerEtAl_JVis_2025/supplement-preview.html).) After spectral reconstruction, the dataset was ready for calculating example spectrum-based metrics.
+
+Similarly, the time-of-flight modality contains 256 values per observation, encoding an 8x8 grid of distance and confidence measurements for up to two objects (8x8 grid, times two objects, times distance + confidence column for each object and grid point -> 256 values). These data were pivoted into a long format, where each row contains the distance and confidence data for both objects for a given position in the grid and a given datetime. After pivoting and converting grid positions into a deviation angle from central view, the dataswert was ready to be used for distance analysis.
 
 This tutorial will start by importing a `Clouclip` dataset and providing an overview of the data. The `Clouclip` export is considerably simpler compared to the `VEET` export, only containing `Distance` and `Illuminance` measurements. The `VEET` dataset will be imported later for the spectrum related metrics.
 
@@ -215,7 +217,15 @@ dataCC |>
   group_by(Dis_range, .add = TRUE) |>  # group by distance range (and by day)
   durations(Dis) |>               # duration per range per day
   pivot_wider(names_from = Dis_range, values_from = duration) |>  # wide format (ranges as columns)
-  to_mean_daily("") |> 
+  # to_mean_daily("") |> 
+  ungroup() |> 
+  mean_daily(prefix = "") |> 
+  pivot_longer(-Date) |> 
+  pivot_wider(names_from = Date) |> 
+  mutate(name = factor(name, levels = rev(dist_labels))
+  ) |> 
+  arrange(name) |> 
+  gt() |> 
   fmt_duration(input_units = "seconds", output_units = "minutes")  # convert seconds to minutes
 ```
 
@@ -240,8 +250,11 @@ dataCC |>
   scale_y_continuous(labels = scales::label_percent()) +
   ggsci::scale_fill_jco() +
   theme_minimal() +
-  labs(y = "Relative duration (%)", x = NULL, fill = "Day type") +
+  labs(y = "Relative duration (%)", x = NULL, fill = NULL) +
   coord_flip()
+# ggsave("manuscript/figures/Figure1.pdf",
+#                 width = 7,
+#                 height = 5)
 ```
 
 :::
@@ -279,9 +292,14 @@ dataCC |>
     cluster.duration = "30 mins",
     interruption.duration = "1 min"
   ) |> 
-  gg_day(y.axis = Dis, y.axis.label = "Distance (cm)", geom = "line") |> 
-  gg_state(state, fill = "red") +
-  geom_hline(yintercept = c(20, 60), col = "red", linetype = "dashed")
+  gg_day(y.axis = Dis, y.axis.label = "Distance (cm)", geom = "line",
+         y.scale = "identity", y.axis.breaks = seq(0,100, by = 20)) |> 
+  gg_state(state, fill = "red") + #add state bands
+  geom_hline(yintercept = c(20, 60), col = "red", linetype = "dashed") +
+  coord_cartesian(ylim = c(0,100))
+# ggsave("manuscript/figures/Figure2.pdf",
+#                 width = 9,
+#                 height = 9)
 ```
 
 #### Near-work episodes
@@ -347,19 +365,22 @@ dataCC |>
   gg_day(y.axis = Dis, y.axis.label = "Distance (cm)", geom = "line") |> 
   gg_photoperiod(coordinates) +
   geom_point(data = \(x) filter(x, is.cluster), col = "red")
+# ggsave("manuscript/figures/Figure3.pdf",
+#                 width = 9,
+#                 height = 9)
 ```
 
 #### Distance with spatial distribution
 
-The `Clouclip` device outputs a singular measure for distance, while the visual environment in natural contiditions contains many distances, depending on the solid angle and direction of the measurement. A device like the `VEET` increases the spatial resolution of these measurements, allowing for more in-depth analyses of the size and position of an object within the field of view. In the case of the `VEET`, data are collected from an 8x8 measurement grid, spanning 52° vertically and 41° horizontally. Here are exemplary observations from six different days at the same time.
+The `Clouclip` device outputs a singular measure for distance, while the visual environment in natural conditions contains many distances, depending on the solid angle and direction of the measurement. A device like the `VEET` increases the spatial resolution of these measurements, allowing for more in-depth analyses of the size and position of an object within the field of view. In the case of the `VEET`, data are collected from an 8x8 measurement grid, spanning 52° vertically and 41° horizontally. Here are exemplary observations from six different days at the same time.
 
 ```{r}
 #| label: fig-VEET-distance
-#| fig-cap: "Example observations of the measurement grid at 1:14 p.m. for each measurement day. Text values show distance in cm. empty grid points show values with low confidence. Zero-distance values were replaced with infinite distance and plotted despite low confidence."
+#| fig-cap: "Example observations of the measurement grid at 1:14 p.m. for each measurement day. Text values show distance in cm. Empty grid points show values with low confidence. Zero-distance values were replaced with infinite distance and plotted despite low confidence."
 #| fig-height: 5
 #| fig-width: 12
 
-slicer <- function(x){seq(min((x-1)*64+1), max(x*64, by = 1))} #allows to choose an observation
+slicer <- function(x){seq(min((x-1)*64+1), max(x*64), by = 1)} #allows to choose an observation
 
 #set visualization parameters
 extras <- list(
@@ -376,13 +397,16 @@ extras <- list(
 
 dataVEET3 |> 
   slice(slicer(9530)) |>  #choose a particular observation
-  mutate(dist1 = ifelse(dist1 == 0, Inf, dist1)) |> #replace 0 distances with 5m
+  mutate(dist1 = ifelse(dist1 == 0, Inf, dist1)) |> #replace 0 distances with infinity
   filter(conf1 >= 0.1 | dist1 == Inf) |> #remove data that has less than 10% confidence
   ggplot(aes(x=x.pos, y=y.pos, fill = dist1/10))+ extras + #plot the data
-  facet_grid(~Datetime) #show one plot per day
+  facet_wrap(~Datetime) #show one plot per day
+# ggsave("manuscript/figures/Figure4.pdf",
+#                 width = 8,
+#                 height = 6)
 ```
 
-To use these distance data in the framework shown above for the `Clouclip` device, a sensible method to condense the data has to be applied. This method has to be chosen based on theoretical assumptions what a relevant distance within the field of view is. Possible methods include:
+To use these distance data in the framework shown above for the `Clouclip` device, a sensible method to condense the data has to be applied. This method has to be chosen based on theoretical assumptions about what a relevant distance within the field of view is. Possible methods include:
 
 - average across all (high confidence) distance values within the grid
 - closest (high confidence) distance within the grid
@@ -430,27 +454,33 @@ dataVEET3_condensed |>
          y.axis.breaks = seq(0,150, by = 20), 
          y.axis.label = "Distance (cm)"
          )
+# ggsave("manuscript/figures/Figure5.pdf",
+#                 width = 7,
+#                 height = 4)
 ```
 
-As can be seen in @fig-VEET-distance_methods, while the overall pattern is similar regardless of the used method, there are notable differences between the methods which will consequently affect downstream analyses. Most importantly, the process of condensation has to be well documented and reproducible, as shown above. Any of these data could now be used to calculate the `frequency of continuous near work`, `visual breaks`, or `near-work episodes` as described above.
+As can be seen in @fig-VEET-distance_methods, while the overall pattern is similar regardless of the used method, there are notable differences between the methods, which will consequently affect downstream analyses. Most importantly, the process of condensation has to be well documented and reproducible, as shown above. Any of these data could now be used to calculate the `frequency of continuous near work`, `visual breaks`, or `near-work episodes` as described above.
 
 ### Light {#light}
 
 The `Clouclip` illuminance data in our example are extremely low (the device was mostly used in dim conditions), which would make certain light exposure summaries trivial or not meaningful. To better illustrate light exposure metrics, we turn to the exemplary `VEET` device’s illuminance data, which capture a broader range of lighting conditions. We import the `VEET` ambient light data (already preprocessed to have regular 5-second intervals as described above) and briefly examine its distribution.
 
-**Illuminance distribution**: The illuminance values from the Clouclip were almost always near zero, while the VEET data include outdoor exposures up to several thousand lux. The contrast is evident from comparing histograms of the two datasets’ lux values (Clouclip vs. VEET). The VEET illuminance histogram (see @fig-hist-VEETlight) shows a heavily skewed distribution with a spike at zero (indicating many intervals of complete darkness or the sensor covered) and a long tail extending to very high lux values. Such zero-inflated and skewed data are common in wearable light measurements [@ZaunerEtAl2025JBR].
+**Illuminance distribution**: The illuminance values from the `Clouclip` were almost always near zero, while the `VEET` data include outdoor exposures up to several thousand lux. The contrast is evident from comparing histograms of the two datasets’ lux values (`Clouclip` vs. `VEET`). The `VEET` illuminance histogram (see @fig-hist-VEETlight) shows a heavily skewed distribution with a spike at zero (indicating many intervals of complete darkness or the sensor being covered) and a long tail extending to very high lux values. Such zero-inflated and skewed data are common in wearable light measurements [@ZaunerEtAl2025JBR].
 
 ```{r}
 #| label: fig-hist-CClight
 #| column: margin
 #| echo: false
-#| fig-cap: "Histogram of illuminance values from the Clouclip dataset (5-second data). THe values are very low and are typical of indoor conditions."
+#| fig-cap: "Histogram of illuminance values from the Clouclip dataset (5-second data). The values are very low and are typical of indoor conditions."
 dataCC |> 
   ggplot(aes(x = Lux)) + 
-  labs(x = "Photopic illuminance (lx)") +
+  labs(x = "Photopic illuminance (lx)", y = "Count (n)") +
   geom_histogram(bins = 100) + 
   theme_minimal() +
   scale_x_continuous(trans = "symlog", breaks = c(0, 1, 10, 100, 1000))
+# ggsave("manuscript/figures/Figure6.pdf",
+#                 width = 7,
+#                 height = 4)
 ```
 
 ```{r}
@@ -464,13 +494,16 @@ dataVEET |>
   geom_histogram(bins = 100) + 
   theme_minimal() +
   scale_x_continuous(trans = "symlog", breaks = c(0, 1, 10, 100, 1000, 10000))
+# ggsave("manuscript/figures/Figure7.pdf",
+#                 width = 7,
+#                 height = 4)
 ```
 
 After confirming that the VEET data cover a broad dynamic range of lighting, we proceed with calculating light exposure metrics. (The VEET data had been cleaned for gaps and irregularities as described earlier; see [Supplement 1](https://tscnlab.github.io/ZaunerEtAl_JVis_2025/supplement-preview.html) for the gap summary table.)
 
 #### Average light exposure
 
-A basic metric is the average illuminance over the day. @tbl-lightexposure shows the mean illuminance (in lux) for weekdays, weekends, and overall daily mean, calculated directly from the raw lux values.
+A basic metric is the average illuminance over the day. @tbl-lightexposure shows the mean illuminance (in lux) for weekdays, weekends, and the overall daily mean, calculated directly from the raw lux values.
 
 ```{r}
 #| label: tbl-lightexposure
@@ -545,17 +578,20 @@ dataVEET |>
   scale_fill_viridis_d() +
   labs(fill = "Illuminance range") +
   theme(legend.position = "bottom")
+# ggsave("manuscript/figures/Figure8.pdf",
+#                 width = 9,
+#                 height = 9)
 ```
 
 #### Frequency of transitions from indoor to outdoor light
 
-We next consider how often the subject moved from an indoor light environment to an outdoor-equivalent environment. We operationally define an "outdoor transition" as a change from <1000 lx to ≥1000 lx. Using the cleaned VEET data, we extract all instances where illuminance crosses that threshold from below to above. 
+We next consider how often the subject moved from an indoor light environment to an outdoor-equivalent environment. We operationally define an "outdoor transition" as a change from <1000 lx to ≥1000 lx. Using the cleaned `VEET` data, we extract all instances where illuminance crosses that threshold from below to above. 
 
 @tbl-changesoutdoor shows the average number of such transitions per day. Note that if data are recorded at a fine temporal resolution (5 s here), very brief excursions above 1000 lx could count as transitions and inflate this number. Indeed, the initial count is fairly high, reflecting fleeting spikes above 1000 lx that might not represent meaningful outdoor exposures.
 
 ```{r}
 #| label: tbl-changesoutdoor
-#| tbl-cap: "Average daily count of transitions from indoor (<1000 lx) to outdoor (≥1000 lx) lighting"
+#| tbl-cap: "Average daily count of transitions from indoor (<1000 lx) to outdoor (≥1000 lx) lighting when looking at 5-second epochs"
 dataVEET |> 
   extract_states(Outdoor, Lux >= 1000, group.by.state = FALSE) |>  # label each interval as Outdoor (Lux≥1000) or not
   filter(!lead(Outdoor) & Outdoor) |>   # find instances where the previous interval was "indoor" and current is "outdoor"
@@ -606,7 +642,7 @@ dataVEET |>
 
 ### Spectrum
 
-The `VEET` device’s spectral sensor provides rich data beyond simple lux values, but it requires reconstruction of the actual light spectrum from raw sensor counts. We processed the spectral sensor data in order to compute two example spectrum-based metrics. Detailed data import, normalization, and spectral reconstruction steps are given in the [Supplement 1](https://tscnlab.github.io/ZaunerEtAl_JVis_2025/supplement-preview.html); here we present the resulting metrics. Briefly, the `VEET`’s spectral sensor recorded counts in ten wavelength bands (roughly 415 nm to 910 nm), plus a `Dark` and a `Clear` channel[^fw]. After normalizing by sensor gain and applying the calibration matrix, we obtained an estimated spectral irradiance distribution for each 5-minute interval in the recording. With these reconstructed spectra, we can derive novel metrics that consider spectral content of the light. 
+The `VEET` device’s spectral sensor provides rich data beyond simple lux values, but it requires reconstruction of the actual light spectrum from raw sensor counts. We processed the spectral sensor data in order to compute two example spectrum-based metrics. Detailed data import, normalization, and spectral reconstruction steps are given in [Supplement 1](https://tscnlab.github.io/ZaunerEtAl_JVis_2025/supplement-preview.html); here we present the resulting metrics. Briefly, the `VEET`’s spectral sensor recorded counts in ten wavelength bands (roughly 415 nm to 910 nm), plus a `Dark` and a `Clear` channel[^fw]. After normalizing by sensor gain and applying the calibration matrix, we obtained an estimated spectral irradiance distribution for each 5-minute interval in the recording. With these reconstructed spectra, we can derive novel metrics that consider spectral content of the light. 
 
 [^fw]: Note that older firmware versions contained two `Clear` channels and the highest spectral channel was indicated as 940 nm. Data collected with this early firmware version are not suitable for spectral reconstruction in the context of research projects.
 
@@ -672,7 +708,7 @@ To visualize short-wavelength exposure over the course of a day, we aggregate th
 
 ```{r}
 #| label: fig-shorttime
-#| fig-cap: "Diurnal profile of short-wavelength light exposure. Each point represents the average short-wavelength irradiance at that hour of the day (0–23 h), normalized to the daily maximum."
+#| fig-cap: "Diurnal profile of short-wavelength light exposure. Each bar represents the average short-wavelength irradiance at that hour of the day (0–23 h), normalized to the daily maximum."
 # Prepare hourly binned data
 dataVEETtime <- dataVEET |>
   cut_Datetime(unit = "1 hour", type = "floor", group_by = TRUE) |>  # bin timestamps by hour
@@ -692,7 +728,9 @@ dataVEETtime |>
        fill = "Date") + 
   scale_y_continuous(labels = scales::label_percent()) +
   scale_x_time(labels = scales::label_time(format = "%H:%M"))
-
+# ggsave("manuscript/figures/Figure9.pdf",
+#                 width = 5,
+#                 height = 4)
 ```
 
 ##### Day vs. night (photoperiod)
@@ -708,7 +746,7 @@ dataVEET |>
   group_by(photoperiod.state, .add = TRUE) |> 
   summarize_numeric(prefix = "", 
                     remove = c("dawn", "dusk", "photoperiod", "Datetime")) |> 
-  group_by(photoperiod.state) |> 
+  group_by(Id, photoperiod.state) |> 
   # mean_daily(prefix = "") |> 
   select(-episodes) |> 
   pivot_wider(names_from =photoperiod.state, values_from = short) |> 

@@ -1,10 +1,11 @@
 project:
-  type: manuscript
+  type: website
 
 manuscript:
   resources:
     - data/Sample_Clouclip.csv
     - data/01_VEET_L.csv.zip
+    - data/02_VEET_L.csv.zip
     - data/VEET_calibration_matrix.csv
 
 website:
