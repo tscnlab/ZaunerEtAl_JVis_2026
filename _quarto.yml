@@ -20,7 +20,7 @@ website:
     left:
       - href: index.qmd
         text: Manuscript
-      - href: _supplement.qmd
+      - href: supplement.qmd
         text: Supplement
     right:
       - icon: github
@@ -36,8 +36,8 @@ format:
     css: styles.css
     link-external-newwindow: true
     toc: true
-    comments:
-      hypothesis: true
+    # comments:
+    #   hypothesis: true
     format:
     toc-location: left
     toc-depth: 3
