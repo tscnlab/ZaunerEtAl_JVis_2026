@@ -779,7 +779,7 @@ sessionInfo()
 
 ### Data availability statement
 
-All code and data in this tutorial and Supplement 1 are available from the GitHub repository: https://github.com/tscnlab/ZaunerEtAl_JVis_2025/, archived on Zenodo: https://doi.org/10.5281/zenodo.16566014 under a MIT license.
+All data and code in this tutorial and Supplement 1 are available from the GitHub repository: https://github.com/tscnlab/ZaunerEtAl_JVis_2025/, archived on Zenodo: https://doi.org/10.5281/zenodo.16566014 under a MIT license (data under CC-BY license).
 
 ### Funding statement
 
