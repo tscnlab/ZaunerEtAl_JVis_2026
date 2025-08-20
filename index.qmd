@@ -252,9 +252,9 @@ dataCC |>
   theme_minimal() +
   labs(y = "Relative duration (%)", x = NULL, fill = NULL) +
   coord_flip()
-# ggsave("manuscript/figures/Figure1.pdf",
-#                 width = 7,
-#                 height = 5)
+ggsave("manuscript/figures/Figure1.png",
+                width = 7,
+                height = 5)
 ```
 
 :::
@@ -297,9 +297,9 @@ dataCC |>
   gg_state(state, fill = "red") + #add state bands
   geom_hline(yintercept = c(20, 60), col = "red", linetype = "dashed") +
   coord_cartesian(ylim = c(0,100))
-# ggsave("manuscript/figures/Figure2.pdf",
-#                 width = 9,
-#                 height = 9)
+ggsave("manuscript/figures/Figure2.png",
+                width = 9,
+                height = 9)
 ```
 
 #### Near-work episodes
@@ -365,9 +365,9 @@ dataCC |>
   gg_day(y.axis = Dis, y.axis.label = "Distance (cm)", geom = "line") |> 
   gg_photoperiod(coordinates) +
   geom_point(data = \(x) filter(x, is.cluster), col = "red")
-# ggsave("manuscript/figures/Figure3.pdf",
-#                 width = 9,
-#                 height = 9)
+ggsave("manuscript/figures/Figure3.png",
+                width = 9,
+                height = 9)
 ```
 
 #### Distance with spatial distribution
@@ -401,9 +401,9 @@ dataVEET3 |>
   filter(conf1 >= 0.1 | dist1 == Inf) |> #remove data that has less than 10% confidence
   ggplot(aes(x=x.pos, y=y.pos, fill = dist1/10))+ extras + #plot the data
   facet_wrap(~Datetime) #show one plot per day
-# ggsave("manuscript/figures/Figure4.pdf",
-#                 width = 8,
-#                 height = 6)
+ggsave("manuscript/figures/Figure4.png",
+                width = 8,
+                height = 6)
 ```
 
 To use these distance data in the framework shown above for the `Clouclip` device, a sensible method to condense the data has to be applied. This method has to be chosen based on theoretical assumptions about what a relevant distance within the field of view is. Possible methods include:
@@ -454,9 +454,9 @@ dataVEET3_condensed |>
          y.axis.breaks = seq(0,150, by = 20), 
          y.axis.label = "Distance (cm)"
          )
-# ggsave("manuscript/figures/Figure5.pdf",
-#                 width = 7,
-#                 height = 4)
+ggsave("manuscript/figures/Figure5.png",
+                width = 7,
+                height = 4)
 ```
 
 As can be seen in @fig-VEET-distance_methods, while the overall pattern is similar regardless of the used method, there are notable differences between the methods, which will consequently affect downstream analyses. Most importantly, the process of condensation has to be well documented and reproducible, as shown above. Any of these data could now be used to calculate the `frequency of continuous near work`, `visual breaks`, or `near-work episodes` as described above.
@@ -478,9 +478,9 @@ dataCC |>
   geom_histogram(bins = 100) + 
   theme_minimal() +
   scale_x_continuous(trans = "symlog", breaks = c(0, 1, 10, 100, 1000))
-# ggsave("manuscript/figures/Figure6.pdf",
-#                 width = 7,
-#                 height = 4)
+ggsave("manuscript/figures/Figure6.png",
+                width = 7,
+                height = 4)
 ```
 
 ```{r}
@@ -494,9 +494,9 @@ dataVEET |>
   geom_histogram(bins = 100) + 
   theme_minimal() +
   scale_x_continuous(trans = "symlog", breaks = c(0, 1, 10, 100, 1000, 10000))
-# ggsave("manuscript/figures/Figure7.pdf",
-#                 width = 7,
-#                 height = 4)
+ggsave("manuscript/figures/Figure7.png",
+                width = 7,
+                height = 4)
 ```
 
 After confirming that the VEET data cover a broad dynamic range of lighting, we proceed with calculating light exposure metrics. (The VEET data had been cleaned for gaps and irregularities as described earlier; see [Supplement 1](https://tscnlab.github.io/ZaunerEtAl_JVis_2025/supplement-preview.html) for the gap summary table.)
@@ -578,9 +578,9 @@ dataVEET |>
   scale_fill_viridis_d() +
   labs(fill = "Illuminance range") +
   theme(legend.position = "bottom")
-# ggsave("manuscript/figures/Figure8.pdf",
-#                 width = 9,
-#                 height = 9)
+ggsave("manuscript/figures/Figure8.png",
+                width = 9,
+                height = 9)
 ```
 
 #### Frequency of transitions from indoor to outdoor light
@@ -728,9 +728,9 @@ dataVEETtime |>
        fill = "Date") + 
   scale_y_continuous(labels = scales::label_percent()) +
   scale_x_time(labels = scales::label_time(format = "%H:%M"))
-# ggsave("manuscript/figures/Figure9.pdf",
-#                 width = 5,
-#                 height = 4)
+ggsave("manuscript/figures/Figure9.png",
+                width = 5,
+                height = 4)
 ```
 
 ##### Day vs. night (photoperiod)
@@ -779,7 +779,7 @@ sessionInfo()
 
 ### Data availability statement
 
-All data in this tutorial and Supplement 1 are available from the GitHub repository: https://github.com/tscnlab/ZaunerEtAl_JVis_2025/, archived on Zenodo: https://doi.org/10.5281/zenodo.16566014 under a CC0 license.
+All code and data in this tutorial and Supplement 1 are available from the GitHub repository: https://github.com/tscnlab/ZaunerEtAl_JVis_2025/, archived on Zenodo: https://doi.org/10.5281/zenodo.16566014 under a MIT license.
 
 ### Funding statement
 
