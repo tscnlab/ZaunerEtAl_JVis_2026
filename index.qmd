@@ -743,15 +743,15 @@ It is also informative to visualize when these high-light conditions occurred. @
 #| warning: false
 #| filename: Visualize time spent outdoors
 #| label: fig-outdoor
-#| fig-cap: "Outdoor light exposure over time. Colored bands indicate periods when illuminance exceeded outdoor thresholds: violet for ≥1000 lx, green for ≥2000 lx, and yellow for ≥3000 lx. Grey shaded regions denote night (from civil dusk to dawn)."
+#| fig-cap: "Outdoor light exposure over time with 2-minute interval. Colored bands indicate periods when illuminance exceeded outdoor thresholds for at least half of each interval: violet for ≥1000 lx, green for ≥2000 lx, and yellow for ≥3000 lx. Grey shaded regions denote night (from civil dusk to dawn)."
 dataVEET |> 
   aggregate_Datetime("2 mins", type = "floor") |> #<1>
-  mutate(Lux_range = na_if(Lux_range, "Indoor")) |> #<2>
+  mutate(Lux_range = fct_recode(Lux_range, NULL = "Indoor")) |> #<2>
   gg_day(y.axis = Lux, #<3>
          y.axis.label = "Photopic illuminance (lx)", #<3>
          geom = "line", #<3>
          jco_color = FALSE) |> #<3>
-  gg_state(Lux_range, aes_fill = Lux_range, #<4>
+  gg_state(Lux_range, aes_fill = fct_rev(Lux_range), #<4>
            alpha = 0.75, ymin = 10^3, ymax = 10^4) + #<4>
   scale_fill_viridis_d() +
   labs(fill = "Illuminance range") +
@@ -770,7 +770,7 @@ dataVEET |>
 #| output: false
 ggsave("manuscript/figures/Figure8.png",
                 width = 9,
-                height = 9)
+                height = 7)
 ```
 
 #### Frequency of transitions from indoor to outdoor light
