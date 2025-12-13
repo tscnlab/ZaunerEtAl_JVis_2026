@@ -1064,6 +1064,10 @@ sessionInfo()
 
 ## Statements
 
+### Acknowledgement
+
+We thank George Hatoun and David Sullivan (Reality Labs Research) for reviewing a draft of the tutorial manuscript and providing sample data for the `VEET` for spectral analyses.
+
 ### Data availability statement
 
 All data and code in this tutorial and Supplement 1 are available from the GitHub repository: https://github.com/tscnlab/ZaunerEtAl_JVis_2026/, archived on Zenodo: https://doi.org/10.5281/zenodo.16566014 under a MIT license (data under CC-BY license).
