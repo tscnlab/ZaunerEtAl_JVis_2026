@@ -68,6 +68,6 @@ bibliography: references.bib
 |            |                                                                                        | [summarize_numeric()](https://tscnlab.github.io/LightLogR/reference/summarize_numeric.html)                        |
 +------------+----------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------+
 
-: Overview of metrics as they are used in this article. In all cases, the averages for weekday, weekend, and the mean daily value are calculated through [mean_daily](<https://tscnlab.github.io/LightLogR/reference/mean_daily.html>). {#tbl-one}{.hover .bordered}
+: Overview of metrics as they are used in this article. In all cases, the averages for weekday, weekend, and the mean daily value are calculated through [mean_daily](https://tscnlab.github.io/LightLogR/reference/mean_daily.html). {#tbl-one}{.hover .bordered}
 
 [^1]: Functions from `LightLogR` are presented as links to the function documentation. General analysis functions (from package `dplyr`) are presented as normal text.
