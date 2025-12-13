@@ -92,13 +92,14 @@ library(LightLogR) #<2>
 library(gt) #<3>
 library(ggridges) #<4>
 library(downlit) #<5>
+library(magick) #<5>
 ```
 
-1. for tidy data science
-2. wearable analysis package
-3. for great tables
-4. for ridgeline plots
-5. this package is not used, but needs to be loaded for code-link feature in the html file
+1. For tidy data science
+2. Wearable analysis package
+3. For great tables
+4. For ridgeline plots
+5. These packages are not used, but are needed for dependencies
 
 ```{r}
 #| label: fig-importCC

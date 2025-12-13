@@ -845,6 +845,8 @@ Note that while imports from different devices can be [merged](https://tscnlab.g
 
 ```{r}
 #| filename: Merge Clouclip and VEET data
+#| label: tbl-merge
+#| tbl-cap: "Overview of the merged dataset"
 data <- join_datasets(dataCC, dataVEET)
 data |> summary_overview(Lux, threshold.missing = 0.5) |> gt()
 ```
@@ -852,6 +854,8 @@ data |> summary_overview(Lux, threshold.missing = 0.5) |> gt()
 We will reuse the example from @sec-avelight, but instead of one participant, we now have data from two devices and participants
 
 ```{r}
+#| label: tbl-relight
+#| tbl-cap: "Recalculation of the mean light exposure per day (after logarithmic transformation to account for zero inflation and skewness) with the merged dataset"
 #| filename: Re-calculate mean photopic illuminance with the merged dataset
 data |> # <1>
   select(Id, Date, Datetime, Lux) |> # <2>
@@ -915,7 +919,7 @@ dataVEET |>
 
 #### Melanopic daylight efficacy ratio (MDER)
 
-The same idea is behind calculating the melanopic daylight efficacy ratio (or MDER), which is defined by the CIE [@CIE_S026_2018] as the melanopic EDI divided by the photopic illuminance [@Hartmeyer2023LightResTechnol]. Results are shown in @tbl-mder. In this case, instead of a simple integration over a wavelength band, we apply an action spectrum to the spectral power distribution (SPD), integrate over the weighted SPD, and apply a correction factor. All alphaopic action spectra are implemented in the `spectral_integration()` function. These will result in photopic illuminance and melanopic equivalent daylight illuminance (melEDI)
+The same idea is behind calculating the melanopic daylight efficacy ratio (or MDER), which is defined by the CIE [@CIE_S026_2018] as the melanopic EDI divided by the photopic illuminance [@Hartmeyer2023LightResTechnol]. Results are shown in @tbl-mder. In this case, instead of a simple integration over a wavelength band, we apply an action spectrum to the spectral power distribution (SPD), integrate over the weighted SPD, and apply a correction factor. All alphaopic action spectra are implemented in the `spectral_integration()` function. These will result in photopic illuminance and melanopic equivalent daylight illuminance (melEDI).
 
 ```{r}
 #| filename: Calculate melEDI and illumiance
