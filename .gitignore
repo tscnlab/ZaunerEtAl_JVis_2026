@@ -38,3 +38,5 @@ rsconnect/
 /.quarto/
 index_files
 _site
+
+**/*.quarto_ipynb

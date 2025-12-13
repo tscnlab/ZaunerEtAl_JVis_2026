@@ -25,7 +25,7 @@ author:
       - Technical University of Munich, Institute for Advanced Study (TUM-IAS), Germany
     orcid: "0000-0002-8572-9268"
 abstract: >
-  Exposure to the optical environment — often referred to as *visual experience* — profoundly influences human physiology and behavior across multiple time scales. In controlled laboratory settings, stimuli can be held constant or manipulated parametrically. However, such exposures rarely replicate real-world conditions, which are inherently complex and dynamic, generating high-dimensional datasets that demand rigorous and flexible analysis strategies. This tutorial presents an analysis pipeline for visual experience datasets, with a focus on reproducible workflows for human chronobiology and myopia research. Light exposure and its retinal encoding affect human physiology and behavior across multiple time scales. Here we provide step-by-step instructions for importing, visualizing, and processing viewing distance and light exposure data using the open-source R package [**LightLogR**](https://tscnlab.github.io/LightLogR/). This includes time-series analyses for working distance, biologically relevant light metrics, and spectral characteristics. By leveraging a modular approach, the tutorial supports researchers in building flexible and robust pipelines that accommodate diverse experimental paradigms and measurement systems.
+  Exposure to the optical environment — often referred to as *visual experience* — profoundly influences human physiology and behavior across multiple time scales. In controlled laboratory settings, stimuli can be held constant or manipulated parametrically. However, such exposures rarely replicate real-world conditions, which are inherently complex and dynamic, generating high-dimensional datasets that demand rigorous and flexible analysis strategies. This tutorial presents an analysis pipeline for visual experience datasets, with a focus on reproducible workflows for human chronobiology and myopia research. Light exposure and its retinal encoding affect human physiology and behavior across multiple time scales. Here we provide step-by-step instructions for importing, visualizing, and processing viewing distance and light exposure data. This includes time-series analyses for working distance, biologically relevant light metrics, and spectral characteristics. The tasks are standardized through the open-source R package [**LightLogR**](https://tscnlab.github.io/LightLogR/). By leveraging a modular approach, the tutorial supports researchers in building flexible and robust pipelines that accommodate diverse experimental paradigms and measurement systems.
 keywords: 
   - wearable
   - light logging
@@ -38,13 +38,17 @@ keywords:
   - spectral analysis
   - open-source
   - reproducibility
-funding: "JZs position is funded by MeLiDos, The project (22NRM05 MeLiDos) has received funding from the European Partnership on Metrology, co-financed from the European Union’s Horizon Europe Research and Innovation Programme and by the Participating States. Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or EURAMET. Neither the European Union nor the granting authority can be held responsible for them. JZ, LAO, and MS received funding from Meta."
+funding: "JZs position is funded by MeLiDos, The project (22NRM05 MeLiDos) has received funding from the European Partnership on Metrology, co-financed from the European Union’s Horizon Europe Research and Innovation Programme and by the Participating States. Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or EURAMET. Neither the European Union nor the granting authority can be held responsible for them. JZ, LAO, and MS received funding from Reality Labs Research."
 format:
   html:
     toc: true
+    toc-depth: 3
+    toc-location: right
     number-sections: true
     code-link: true
     code-tools: true
+    grid:
+      body-width: 850px
     html-math-method:
       method: mathjax
       url: "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML"
@@ -57,29 +61,51 @@ execute:
 
 ## Introduction
 
+![](assets/abstract_med.gif){width=40%}
+
 Exposure to the optical environment — often referred to as *visual experience* — profoundly influences human physiology and behavior across multiple time scales. Two notable examples, from distinct research domains, can be understood through a common retinally-referenced framework.
 
 The first example relates to the non-visual effects of light on human circadian and neuroendocrine physiology. The light–dark cycle entrains the circadian clock, and light exposure at night suppresses melatonin production [@Brown2022PLoSBiol; @Blume2019Somnologie]. The second example concerns the influence of visual experience on ocular development, particularly myopia. Time spent outdoors — which features distinct optical environments — has been consistently associated with protective effects on ocular growth and health outcomes [@DahlmannNoor2025GraefesArchClinExpOphthal].
 
-In controlled laboratory settings, light exposure can be held constant or manipulated parametrically. However, such exposures rarely replicate real-world conditions, which are inherently complex and dynamic. As people move in and between spaces (indoors and outdoors) and move their body, head, and eyes, exposure to the optical environment varies significantly [@Webler2019CurrOpinBehavSci] and is modulated by behavior [@Biller2024CommunPsychol]. Wearable devices for measuring light exposure have thus emerged as vital tools to capture the richness of ecological visual experience. These tools generate high-dimensional datasets that demand rigorous and flexible analysis strategies.
+In controlled laboratory settings, light exposure can be held constant or manipulated parametrically. In contrast, real-world conditions are inherently complex and dynamic, and cannot be captured by single spot measurements. As people move in and between spaces (indoors and outdoors) and move their body, head, and eyes, exposure to the optical environment varies significantly [@Webler2019CurrOpinBehavSci] and is modulated by behavior [@Biller2024CommunPsychol]. Wearable devices for measuring light exposure have thus emerged as vital tools to capture the ecological visual experience. These tools generate high-dimensional datasets that demand rigorous and flexible analysis strategies.
 
-Starting in the 1980s [@Okudaira1983AmJPhysiol], technology to measure optical exposure has matured, with miniaturized illuminance sensors now (in 2025) very common in consumer wearables. In research, several devices are available that differ in functionality, ranging from small pins measuring ambient illuminance [@Mohamed2021OptExpress] to head-mounted multi-modal devices capturing nearly all relevant aspects of visual experience [@Gibaldi2024TranslVisSciTechnol]. Increased capabilities in wearables bring complex, dense datasets. These go hand-in-hand with a proliferation of metrics, as highlighted by recent review papers in both circadian and myopia research.
+Starting in the 1980s [@Okudaira1983AmJPhysiol], technology to measure optical exposure has matured, with miniaturized illuminance sensors now (in 2025) very common in consumer wearables [@vanDuijnhoven2025BuildEnviron]. In research, several devices are available that differ in functionality, ranging from small pins measuring ambient illuminance [@Mohamed2021OptExpress] to head-mounted multi-modal devices capturing nearly all relevant aspects of visual experience [@Gibaldi2024TranslVisSciTechnol]. Increased capabilities in wearables bring complex, dense datasets. These go hand-in-hand with a proliferation of metrics, as highlighted by recent review papers in both circadian and myopia research [@Honekopp2023ClinOphthalmol; @Hartmeyer2023LightResTechnol].
 
-At present, the analysis processes to derive metrics are often implemented on a per-laboratory or even per-researcher basis. This fragmentation is a potential source of errors and inconsistencies between studies, consumes considerable researcher time [@Hartmeyer2022LightResTechnol], and these bespoke processes and formats hinder harmonization or meta-analysis across multiple studies. Too often, more time is spent preparing data than gaining insights through rigorous statistical analysis. These preparation tasks are best handled, or at least facilitated, by standardized, transparent, community-based analysis pipelines [@Zauner2024PLOSONE].
+At present, the analysis processes to derive metrics are often implemented on a per-laboratory or even per-researcher basis. This fragmentation is a potential source of errors and inconsistencies between studies, consumes considerable researcher time [@Hartmeyer2022LightResTechnol], and these bespoke processes and formats hinder harmonization or meta-analysis across multiple studies. It is very common that more time is spent preparing data than gaining insights through rigorous statistical analysis. These preparation tasks are best handled, or at least facilitated, by standardized, transparent, community-based analysis pipelines [@Zauner2024PLOSONE].
 
-In circadian research, the R package LightLogR was developed to address this need [@Zauner2025JOpenSourceSoftw]. LightLogR is an open-source, MIT-licensed, community-driven package specifically designed for data from wearable light loggers and optical radiation dosimeters. It contains functions to calculate over sixty different metrics used in the field [@Hartmeyer2023LightResTechnol]. In a recent [update](https://tscnlab.github.io/LightLogR/news/index.html#lightlogr-090-sunrise), the package was expanded to handle modalities beyond illuminance, such as viewing distance and light spectra—capabilities highly relevant for myopia research [@Honekopp2023ClinOphthalmol].
+In circadian research, the R package LightLogR was developed to address this need [@Zauner2025JOpenSourceSoftw]. LightLogR is an open-source, MIT-licensed, community-driven package specifically designed for data from wearable light loggers and optical radiation dosimeters. It contains functions to calculate over sixty different metrics used in the field [@Hartmeyer2023LightResTechnol]. The package functions come with light-related defaults, but they remain fundamentally agnostic to modality. As a result, parameters like viewing distance and light spectra, both highly relevant to myopia research [@Honekopp2023ClinOphthalmol], can easily be handled.
 
-In this article, we demonstrate that LightLogR’s analysis pipelines and metric functions apply broadly across the field of visual experience research, not just to circadian rhythms and chronobiology. Our approach is modular and extensible, allowing researchers to adapt it to a variety of devices and research questions. Emphasis is placed on clarity, transparency, and reproducibility, aligning with best practices in scientific computing and open science. We use example data from two devices to showcase the LightLogR workflow with metrics relevant to myopia research, covering working distance, (day)light exposure, and spectral analysis. Readers are encouraged to recreate the analysis using the provided code. All necessary data and code are openly available in the [GitHub repository](https://github.com/tscnlab/ZaunerEtAl_JVis_2025).
+In this article, we demonstrate that LightLogR’s analysis pipelines and metric functions apply broadly across the field of visual experience research, not just to circadian rhythms and chronobiology. Our approach is modular and extensible, allowing researchers to adapt it to a variety of devices and research questions. Emphasis is placed on clarity, transparency, and reproducibility, aligning with best practices in scientific computing and open science. We use example data from two devices (worn by different individuals and at different times) to showcase the LightLogR workflow with metrics relevant to myopia research, covering working distance, (day)light exposure, and spectral analysis. Readers are encouraged to recreate the analysis using the provided code. All necessary data and code are openly available in the [GitHub repository](https://github.com/tscnlab/ZaunerEtAl_JVis_2026).
+
+::: {.callout-tip}
+### Scope
+
+This article focuses on workflows for deriving condensed metrics from time-series data collected with wearable devices in the visual-experience domain. Specifically, we address illuminance, viewing distance, and spectral irradiance. Example datasets from two types of wearable devices are used for illustration.
+
+Many relevant considerations arise when collecting data with wearable devices. This article covers only a subset of these. In particular, it does not address:
+
+-	device selection (see, e.g., [@vanDuijnhoven2025BuildEnviron; @Zauner2025LightResTech])
+-	measurement accuracy or device calibration
+-	auxiliary data such as sleep/wake information (see, e.g., [@Zauner2025npj; @Guidolin2025BehavResMethods])
+
+More information on those aspects can be found in the [*Technical guide for wearable optical radiation dosimetry and visual experience assessment*](https://doi.org/10.17617/6xca-cg59) [@zauner2025].
+
+To demonstrate the workflows, this article uses expert-informed definitions of metrics and metric parameters (see, e.g., @tbl-one, @tbl-two, and the non-wear detection rules based on activity data described in [Supplement 1](supplement.qmd)). These definitions and thresholds should not be interpreted as universal standards, nor are they hard-coded into the software package. For any application, parameter choices must be tailored to the research domain, study context and design, and the specifications of the wearable device.
+
+Further, the article is split up in the main analysis part, where all metrics are calculated, and the [Supplement 1](supplement.qmd), where data is imported, screened, and prepared. Thus, the reader is referred to [Supplement 1](supplement.qmd) for all aspects regarding data formats, preparation steps, and handling of gaps, i.e., missing data.
+
+Lastly, the example data used in the article do not stem from a controlled experimental data collection but consist of pilot data gathered in an ecological setting without a fixed protocol. Given the substantial interindividual differences in visual experience metrics, and because the analyses focus on one participant at a time, the reported results should be interpreted as illustrative rather than representative of typical or population-level values.
+:::
 
 ## Methods and materials
 
 ### Software
 
-This tutorial was built with `Quarto`, an open-source scientific and technical publishing system that integrates text, code, and code output into a single document. The source code to reproduce all results is included and accessible via the Quarto document's `code tool` menu. All analyses were conducted in R (version 4.4.3, "Trophy Case") using `LightLogR` (version 0.9.2 "Sunrise"). We also used the `tidyverse` suite (version 2.0.0) for data manipulation (which LightLogR follows in its design), and the `gt` package (version 1.0.0) for generating summary tables. A comprehensive overview of the R computing environment is provided in the session info (see [Session info](#sessioninfo) section).
+This tutorial was built with `Quarto`, an open-source scientific and technical publishing system that integrates text, code, and code output into a single document. The source code to reproduce all results is included and accessible via the Quarto document's `code tool` menu. All analyses were conducted in R (version 4.5.0, "How About a Twenty-Six") using `LightLogR` (version 0.10.0 "High noon"). We also used the `tidyverse` suite (version 2.0.0) for data manipulation (which LightLogR follows in its design), and the `gt` package (version 1.1.0) for generating summary tables. A comprehensive overview of the R computing environment is provided in the session info (see [Session info](#sessioninfo) section).
 
 ### Metric selection and definitions
 
-In March 2025, two workshops with myopia researchers — initiated by the Research Data Alliance (RDA) Working Group on Optical Radiation Exposure and Visual Experience Data — focused on current needs and future opportunities in data analysis, including the development and standardization of metrics. Based on expert input from these workshops, the authors of this tutorial compiled a list of visual experience metrics, shown in @tbl-one. These include many currently used metrics and definitions [@Wen2020bjophthalmol; @Wen2019TransVisSciTech; @Bhandari2020OphthalmicPhysiolOpt; @Williams2019Scientificreports], as well as new metrics enabled by spectrally-resolved measurements.
+In March 2025, two workshops with myopia researchers — initiated by the Research Data Alliance (RDA) Working Group on Optical Radiation Exposure and Visual Experience Data — focused on current needs and future opportunities in data analysis, including the development and standardization of metrics. Based on expert input from these workshops, the authors of this tutorial compiled a list of visual experience metrics, shown in @tbl-one. These include many currently used metrics and definitions [@Wen2020bjophthalmol; @Wen2019TransVisSciTech; @Bhandari2020OphthalmicPhysiolOpt; @Williams2019Scientificreports], as well as new metrics enabled by spectrally-resolved measurements. While they are not derived by a formal consensus process, they are expert-informed and used in current scientific research, and thus will serve as example-definitions for metrics and thresholds throughout this article.
 
 {{< include _Table1.qmd >}}
 
@@ -87,23 +113,29 @@ In March 2025, two workshops with myopia researchers — initiated by the Resear
 
 {{< include _Table2.qmd >}}
 
+It should be noted that although daylight levels can far exceed the thresholds defined in @tbl-two - and may reach or even exceed 10^5 lux - empirical daylight levels measured at eye level are much lower, typically around 10^3 lux, especially when considering aggregated time-series data over minutes to hours.
+
 ### Devices
 
 Data from two wearable devices are used in this analysis:
 
--   `Clouclip`: A wearable device that measures viewing distance and ambient light [Glasson Technology Co., Ltd, Hangzhou, China; @Wen2021ActaOphtalmol; @Wen2020bjophthalmol]. The Clouclip provides a simple data output with only Distance (working distance, in centimeters) and Illuminance (ambient light, in lux). Data in our example were recorded at 5-second intervals. Approximately one week of data (\~120,960 observations) is about 1.6 MB in size.
+-   `Clouclip`: A wearable device that measures viewing distance and ambient light simultaneously [Glasson Technology Co., Ltd, Hangzhou, China; @Wen2021ActaOphtalmol; @Wen2020bjophthalmol]. The Clouclip provides a simple data output with only distance (working distance, in centimeters) and illuminance (ambient light, in lux). Data in our example were recorded at 5-second intervals. Approximately one week of data (\~120,960 observations) is about 1.6 MB in size.
 
--   `Visual Environment Evaluation Tool` (VEET): A head-mounted multi-modal device that logs multiple data streams [Meta Platforms, Inc., Menlo Park, CA, USA; @Sah2025OphtalmicPhysiolOpt; @Sullivan2024]. The VEET dataset used here contains simultaneous measurements of distance (via a time-of-flight sensor), ambient light (illuminance), activity (accelerometer & gyroscope), and spectral irradiance (multi-channel light sensor). Data were recorded at 2-second intervals, yielding a very dense dataset (\~270 MB per week).
+-   `Visual Environment Evaluation Tool` (VEET): A head-mounted multi-modal device that logs multiple data streams [Reality Labs Research, Menlo Park, CA, USA; @Sah2025OphtalmicPhysiolOpt; @Sullivan2024]. The VEET dataset used here contains simultaneous measurements of distance (via a time-of-flight sensor), ambient light (illuminance), activity (accelerometer & gyroscope), and spectral irradiance (multi-channel light sensor). Data were recorded at 2-second intervals, yielding a very dense dataset (\~270 MB per week).
 
 ### Data processing summary
 
-The [Results](#results) section uses imported and pre-processed data from the two devices to calculate metrics. [Supplement 1](https://tscnlab.github.io/ZaunerEtAl_JVis_2025/supplement-preview.html) contains the annotated code and description for the steps involved. The following summarizes the steps involved:
+The [Results](#results) section uses imported and pre-processed data from the two devices to calculate metrics. [Supplement 1](supplement.qmd) contains the annotated code and description for the steps involved. The following summarizes the steps involved, please refer to the supplement for details:
 
-**Data import:** We imported raw data from the `Clouclip` and `VEET` devices using LightLogR’s built-in import functions, which automatically handle device-specific formats and idiosyncrasies. The `Clouclip` export file (provided as a tab-delimited text file) contains timestamped records of distance (cm) and illuminance (lux). LightLogR’s `import$Clouclip` function reads this file, after specifying the device’s recording timezone, and converts device-specific sentinel codes into proper missing values. For instance, the Clouclip uses special numeric codes to indicate when it is in “sleep mode” or when a reading is out of the sensor’s range, rather than recording a normal value. LightLogR identifies `-1` (for both distance and lux) as indicating the device’s sleep mode and `204` (for distance) as indicating the object was beyond the measurable range, replacing these with `NA` and logging their status in separate columns. The import routine also provides an initial summary of the dataset, including start and end times and any irregular sampling intervals or gaps.
+**Data import:** We imported raw data from the `Clouclip` and `VEET` devices using LightLogR’s built-in import functions, which automatically handle device-specific formats and idiosyncrasies. 
 
-For the `VEET` device, data were provided as CSV logs (zipped on Github, due to size). We focused on the ambient light sensor modality first. Using `import$VEET(..., modality = "ALS")`, we extracted the illuminance (`Lux`) data stream and its timestamps. The raw VEET data similarly can contain irregular intervals or missing periods (e.g., if the device stopped recording or was reset); the import summary flags these issues.
+The `Clouclip` export file (provided as a tab-delimited text file) contains timestamped records of distance (cm) and illuminance (lux). LightLogR’s `import$Clouclip` function reads this file, after specifying the device’s recording timezone, and converts device-specific sentinel codes into proper missing values. For instance, the Clouclip uses special numeric codes to indicate when it is in “sleep mode” or when a reading is out of the sensor’s range, rather than recording a normal value. LightLogR identifies `-1` (for both distance and lux) as indicating the device’s sleep mode and `204` (for distance) as indicating the object was beyond the measurable range, replacing these with `NA` and logging their status in separate columns. The import routine also provides an initial summary of the dataset, including start and end times and any irregular sampling intervals or gaps.
 
-**Irregular intervals and gaps:** Both datasets showed irregular timing and missing data, i.e., gaps. Irregular data means that some observations did not align to the nominal sampling interval (e.g., slight timing drift or pauses in recording). For the `Clouclip` 5-second data, we detected irregular timestamps spanning all but the first and last day of the recording. Handling such irregularities is important because many downstream analyses assume a regular time series. We evaluated strategies to address this, including:
+For the `VEET` device, data were provided as CSV logs (zipped on Github, due to size). We focused on the ambient light sensor modality first. Using `import$VEET(..., modality = "ALS")`, we extracted the illuminance (`Lux`) data stream and its timestamps. The raw VEET data similarly contains irregular intervals and can contain missing periods (e.g., if the device stopped recording or was reset); the import summary flags these issues.
+
+Besides the `Clouclip` and `VEET`, LightLogR 0.10.0 contains import functions for 18 more wearable devices. The package further supports versions due to evolving data formats, and includes documentation for both [code-based](https://tscnlab.github.io/LightLogR/reference/import_adjustment.html) and [code-less](https://tscnlab.github.io/LightLogR/articles/Import.html#from-which-devices-can-i-import-data) additions of new device import-functions.
+
+**Irregular intervals, gaps, non-wear times:** Both datasets showed irregular timing and missing data, i.e., gaps. Irregular data means that some observations did not align to the nominal sampling interval (e.g., slight timing drift or pauses in recording). For the `Clouclip` 5-second data, we detected irregular timestamps spanning all but the first and last day of the recording. Handling such irregularities is important because many downstream analyses assume a regular time series. We evaluated strategies to address this, including:
 
 -   Removing an initial portion of data if irregularities occur mainly during device start-up.
 
@@ -113,32 +145,36 @@ For the `VEET` device, data were provided as CSV logs (zipped on Github, due to 
 
 Based on the import summary and visual inspection of the time gaps, we chose to round the observation times to the nearest 5-second mark, as this addressed the minor offsets without significant data loss. After rounding timestamps, we added an explicit date column for convenient grouping by day.
 
-We then generated a summary of missing data for each day. Implicit gaps (intervals where the device should have recorded data but did not) were converted into explicit missing entries using LightLogR’s gap-handling functions. We also removed days that had very little data (in our `Clouclip` example, days with \<1 hour of recordings were dropped) to focus on days with substantial wear time.
+We then generated a summary of missing data for each day. Implicit gaps (intervals where the device should have recorded data but did not) were converted into explicit missing entries using LightLogR’s gap-handling functions. We also removed days that had very little data to focus on days with substantial wear time. In our `Clouclip` example, days with \<1 hour of recordings were dropped. This threshold should be adjusted based on how much complete days matter for a given analysis at hand. E.g., in circadian science, the metrics of *interdaily stability* and *intradaily variation* require measurements for each hour of the day.
 
-After these preprocessing steps, the `Clouclip` dataset had no irregular timestamps remaining and contained explicit markers for all periods of missing data (e.g., times when the device was off or not worn). The distance and illuminance values were now ready for metric calculations.
+After these preprocessing steps, the `Clouclip` dataset had no irregular timestamps remaining and contained explicit markers for all periods of missing data (e.g., times when the device was off or not worn). The distance and illuminance values were now ready for metric calculations. Because the device was put in `sleep mode` when not worn, there are no measurements during non-wear times. 
 
-The `VEET` illuminance data underwent a similar cleaning procedure. To make the `VEET`’s 2-second illuminance data more comparable to the `Clouclip`’s and to reduce computational load, we aggregated the illuminance time series to 5-second intervals. We then inserted explicit missing entries for any gaps and removed days with more than one hour of missing illuminance data. After cleaning, six days of `VEET` illuminance data with good coverage remained for analysis (see Supplementary Material for details).
+The `VEET` illuminance data underwent a similar cleaning procedure. To make the `VEET`’s 2-second illuminance data more comparable to the `Clouclip`’s and to reduce computational load, we aggregated the illuminance time series to 5-second intervals. Aggregation was performed with the arithmetic mean of values in a 5-second bin. We then inserted explicit missing entries for each whole day and removed days with more than one hour of missing illuminance data. After cleaning, six days of `VEET` illuminance data with good coverage remained for analysis (see [Supplement 1](supplement.qmd) for details).
 
-Finally, for spectral analysis, we imported the `VEET`’s spectral sensor modality, and, for the distance analysis, the time-of-flight modality. This required additional processing: the raw spectral data consists of counts from 10 wavelength-specific channels (approximately 415 nm through 940 nm, plus two broadband clear channels and a dark channel) along with a sensor gain setting. We aggregated the spectral data to 5-minute intervals to focus on broader trends and reduce data volume. Each channel’s counts were normalized by the appropriate gain at each moment, and the two clear channels were averaged. Using a calibration matrix provided by the manufacturer (specific to the spectral sensor model), we reconstructed full spectral power distributions for each 5-minute interval. The end result is a list-column in the dataset where each entry is the estimated spectral irradiance across wavelengths for that time interval. (Detailed spectral preprocessing steps, including the calibration and normalization, are provided in the [Supplement](https://tscnlab.github.io/ZaunerEtAl_JVis_2025/supplement-preview.html).) After spectral reconstruction, the dataset was ready for calculating example spectrum-based metrics.
+Finally, for spectral analysis, we imported the `VEET`’s spectral sensor modality, and, for the distance analysis, the time-of-flight modality. This required additional processing: the raw spectral data consists of counts from 10 wavelength-specific channels (approximately 415 nm through 940 nm, unequally spaced between 30 and 50 nm, plus one broadband clear channel covering the whole range of individual channels and a dark channel) along with a sensor gain setting. We aggregated the spectral data to 5-minute intervals to focus on broader trends and reduce data volume. Each channel’s counts were normalized by the appropriate gain. Using a calibration matrix provided by the manufacturer (specific to the spectral sensor model), we reconstructed full spectral power distributions for each 5-minute interval. The end result is a list-column in the dataset where each entry is the estimated spectral irradiance across wavelengths for that time interval. Detailed spectral preprocessing steps, including the calibration and normalization, are provided in the [Supplement 1](supplement.qmd). After spectral reconstruction, the dataset was ready for calculating example spectrum-based metrics.
 
-Similarly, the time-of-flight modality contains 256 values per observation, encoding an 8x8 grid of distance and confidence measurements for up to two objects (8x8 grid, times two objects, times distance + confidence column for each object and grid point -> 256 values). These data were pivoted into a long format, where each row contains the distance and confidence data for both objects for a given position in the grid and a given datetime. After pivoting and converting grid positions into a deviation angle from central view, the dataswert was ready to be used for distance analysis.
+Similarly, the time-of-flight modality contains 256 values per observation, encoding an 8x8 grid of distance and confidence measurements for up to two objects (8x8 grid, times two objects, times distance + confidence column for each object and grid point -> 256 values). For computational reasons, only the first object was kept. These data were pivoted into a long format, where each row contains the distance and confidence data for a given position in the grid and a given datetime. After pivoting and converting grid positions into a deviation angle from central view, the dataset was ready to be used for distance analysis.
+
+Because the `VEET` devices record even when not worn, a non-wear detection using the devices' actigraphy modality was implemented. This process used the standard deviation of a linear motion sensor in a 5-minute bin with a visually derived threshold to separate wear from non-wear time. Measurements of illuminance and distance were consequently removed during the calculated non-wear times.
 
 This tutorial will start by importing a `Clouclip` dataset and providing an overview of the data. The `Clouclip` export is considerably simpler compared to the `VEET` export, only containing `Distance` and `Illuminance` measurements. The `VEET` dataset will be imported later for the spectrum related metrics.
 
 ```{r}
 #| label: setup
 #| output: false
-# load libraries
+#| filename: Load libraries and preprocessed data
 library(LightLogR)
 library(tidyverse)
 library(gt)
+load("data/cleaned/data.RData")
 ```
 
 ```{r}
-load("data/cleaned/data.RData")
-coordinates <- c(29.75, -95.36) #coordinates for Houston, Texas
-#coordinates are important to calculate and visualize photoperiods later
+#| filename: Store coordinates of data collection
+coordinates <- c(29.75, -95.36) #<1> 
 ```
+
+1. Coordinates for Houston, Texas; coordinates are important to calculate and visualize photoperiods later
 
 ## Results {#results}
 
@@ -147,53 +183,67 @@ coordinates <- c(29.75, -95.36) #coordinates for Houston, Texas
 We first examine metrics related to viewing distance, using the processed `Clouclip` dataset. Many distance-based metrics are computed for each day and then averaged over weekdays, weekends, or across all days. To facilitate this, we define a helper function that will take daily metric values and calculate the mean values for weekdays, weekends, and the overall daily average:
 
 ```{r}
+#| filename: Define helper function to_mean_daily()
 to_mean_daily <- function(data, prefix = "average_") {
   data |> 
-    ungroup(Date) |>        # ungroup by days
-    mean_daily(prefix = prefix) |>   # calculate the averages per grouping
-    rename_with(.fn = \(x) str_replace_all(x,"_"," ")) |>  # remove underscores in names
-    gt()               # format as a gt table for display
+    ungroup(Date) |>  #<1>      
+    mean_daily(prefix = prefix) |>   # <2>
+    rename_with(.fn = \(x) str_replace_all(x,"_"," ")) |>  # <3>
+    gt()               # <4>
 }
 
 ```
+
+1. Ungroup by days
+2. Calculate the averages per grouping
+3. Remove underscores in names
+4. Format as a gt table for display
 
 #### Total wear time daily
 
 *Total wear time daily* refers to the amount of time the device was actively collecting distance data each day (i.e. the time the device was worn and operational). We compute this by summing all intervals where a valid distance measurement is present, ignoring periods where data are missing or the device was off. The results are shown in @tbl-wear.
 
 ```{r}
+#| filename: Calculate total wear time
 #| label: tbl-wear
 #| tbl-cap: "Total wear time per day (average across days)"
 dataCC |> 
-  durations(Dis) |>                # calculate total duration of data per day
-  to_mean_daily("Total wear ")
+  durations(Dis) |> #<1>
+  to_mean_daily("Total wear ") #<2>
 ```
+
+1. Calculate total duration of data per day
+2. Using the helper function defined above
 
 #### Duration within distance ranges {#distance-range}
 
-Many myopia-relevant metrics concern the time spent at certain viewing distances (e.g., “near work” vs. intermediate or far distances). We calculate the duration of time spent in specific distance ranges. @tbl-nearwork shows the average daily *duration of near work*, defined here as time viewing at 10–60 cm (a commonly used definition for near-work distance). @tbl-ranges provides a more detailed breakdown across multiple distance bands.
+Many myopia-relevant metrics concern the time spent at certain viewing distances (e.g., “near work” vs. intermediate or far distances). We calculate the duration of time spent in specific distance ranges. @tbl-nearwork shows the average daily *duration of near work*, defined here as time viewing at 15–60 cm. @tbl-ranges provides a more detailed breakdown across multiple distance bands.
 
 ::: panel-tabset
 ##### Duration of near work
 
 ```{r}
 #| label: tbl-nearwork
-#| tbl-cap: "Daily duration of near work (10–60 cm viewing distance)"
+#| filename: Calculate daily duration of near work
+#| tbl-cap: "Daily duration of near work (15–60 cm viewing distance)"
 dataCC |> 
-  filter(Dis >= 10, Dis < 60) |>   # consider only distances in [10, 60) cm
-  durations(Dis) |>                # total duration in that range per day
+  filter(Dis >= 15, Dis < 60) |>   # <1>
+  durations(Dis) |>                # <2>
   to_mean_daily("Near work ")
 ```
+
+1. Consider only distances in [15, 60) cm
+2. Total duration in that range per day
 
 ##### Duration within distance ranges
 
 First, we define a set of distance breakpoints and descriptive labels for each range:
 
 ```{r}
-# defining distance ranges (in cm)
-dist_breaks <- c(10, 20, 30, 40, 50, 60, 70, 80, 90, 100, Inf)
+#| filename: Defining distance ranges (in cm)
+dist_breaks <- c(15, 20, 30, 40, 50, 60, 70, 80, 90, 100, Inf)
 dist_labels <- c(
-    "Extremely near",          # [10, 20)
+    "Extremely near",          # [15, 20)
     "Very near",               # [20, 30)
     "Fairly near",             # [30, 40)
     "Near",                    # [40, 50)
@@ -210,41 +260,47 @@ Now we cut the distance data into these ranges and compute the daily duration sp
 
 ```{r}
 #| label: tbl-ranges
+#| filename: Calculate daily duration within viewing distance range
 #| tbl-cap: "Daily duration in each viewing distance range"
 dataCC |> 
-  mutate(Dis_range = cut(Dis, breaks = dist_breaks, labels = dist_labels)) |>  # categorize distances
-  drop_na(Dis_range) |>           # remove intervals with no data
-  group_by(Dis_range, .add = TRUE) |>  # group by distance range (and by day)
-  durations(Dis) |>               # duration per range per day
-  pivot_wider(names_from = Dis_range, values_from = duration) |>  # wide format (ranges as columns)
-  # to_mean_daily("") |> 
+  mutate(Dis_range = cut(Dis, breaks = dist_breaks, labels = dist_labels)) |>  #<1>
+  drop_na(Dis_range) |>           #<2>
+  group_by(Dis_range, .add = TRUE) |>  # <3>
+  durations(Dis) |>               # <4>
+  pivot_wider(names_from = Dis_range, values_from = duration) |>  # <5>
   ungroup() |> 
   mean_daily(prefix = "") |> 
   pivot_longer(-Date) |> 
   pivot_wider(names_from = Date) |> 
-  mutate(name = factor(name, levels = rev(dist_labels))
-  ) |> 
+  mutate(name = factor(name, levels = rev(dist_labels))) |> 
   arrange(name) |> 
   gt() |> 
-  fmt_duration(input_units = "seconds", output_units = "minutes")  # convert seconds to minutes
+  fmt_duration(input_units = "seconds", output_units = "minutes")  # <6>
 ```
+
+1. Categorize distances
+2. Remove intervals with no data
+3. Group by distance range (in addition to the date)
+4. Duration per range per day
+5. Pivot data from long to wide format (ranges as columns)
+6. Convert seconds to minutes
 
 To visualize this, @fig-ranges illustrates the relative proportion of time spent in each distance range:
 
 ```{r}
 #| label: fig-ranges
-#| fig-cap: "Percentage of total time spent in each viewing distance range"
-#| echo: false
+#| filename: Plot time spent within each viewing distance range
+#| fig-cap: "Percentage of total time spent in each viewing distance range for an average day (mean daily), average weekday, or weekend"
 dataCC |> 
-  mutate(Dis_range = cut(Dis, breaks = dist_breaks, labels = dist_labels)) |> 
-  drop_na(Dis_range) |> 
-  group_by(Dis_range, .add = TRUE) |>
-  durations(Dis) |> 
-  group_by(Dis_range) |> 
-  mean_daily(prefix = "") |> 
-  ungroup() |> 
+  mutate(Dis_range = cut(Dis, breaks = dist_breaks, labels = dist_labels)) |> #<1>
+  drop_na(Dis_range) |> #<1>
+  group_by(Dis_range, .add = TRUE) |> #<1>
+  durations(Dis) |> #<1>
+  group_by(Dis_range) |> #<1>
+  mean_daily(prefix = "") |> #<1>
+  ungroup() |> #<1>
   mutate(Dis_range = forcats::fct_relabel(Dis_range, \(x) str_replace(x, " ", "\n"))) |> 
-  mutate(duration = duration/sum(duration), .by = Date) |>    # convert to percentage of daily total
+  mutate(duration = duration/sum(duration), .by = Date) |>    #<2>
   ggplot(aes(x = Dis_range, y = duration, fill = Date)) +
   geom_col(position = "dodge") +
   scale_y_continuous(labels = scales::label_percent()) +
@@ -257,46 +313,70 @@ ggsave("manuscript/figures/Figure1.png",
                 height = 5)
 ```
 
+1. Broadly, this portion repeats the prior code cell
+2. Convert to percentage of daily total
+
 :::
 
 #### Frequency of continuous near work
 
-Continuous near-work is typically defined as sustained viewing within a near distance for some minimum duration, allowing only brief interruptions. We use LightLogR’s `cluster` function to identify episodes of continuous near work. Here we define a near-work episode as viewing distance between 20 cm and 60 cm that lasts at least 30 minutes, with interruptions of up to 1 minute allowed (meaning short breaks ≤1 min do not end the episode). Using [extract_clusters()](https://tscnlab.github.io/LightLogR/reference/extract_clusters.html) with those parameters, we count how many such episodes occur per day.
+Continuous near-work can be understood as sustained viewing within a near distance for some minimum duration, allowing only brief interruptions. We use LightLogR’s `cluster` function to identify episodes of continuous near work. Here, we define a near-work episode as viewing distance between 20 cm and 60 cm that lasts at least 30 minutes, with interruptions of up to 1 minute allowed (meaning short breaks ≤1 min do not end the episode). Using [extract_clusters()](https://tscnlab.github.io/LightLogR/reference/extract_clusters.html) with those parameters, we count how many such episodes occur per day.
 
 @tbl-continuousnear summarizes the average frequency of continuous near-work episodes per day, and @fig-visbreak provides an example visualization of these episodes on the distance time series.
 
 ```{r}
 #| label: tbl-continuousnear
+#| filename: Calculate the frequency of continuous near-work episodes per day
 #| tbl-cap: "Frequency of continuous near-work episodes per day"
 dataCC |> 
   extract_clusters(
-    Dis >= 20 & Dis < 60,            # condition: near-work distance
-    cluster.duration = "30 mins",    # minimum duration of a continuous episode
-    interruption.duration = "1 min", # maximum gap allowed within an episode
-    drop.empty.groups = FALSE        # keep days with zero episodes in output
+    Dis >= 20 & Dis < 60,            # <1>
+    cluster.duration = "30 mins",    # <2>
+    interruption.duration = "1 min", # <3>
+    drop.empty.groups = FALSE        # <4>
   ) |> 
   summarize_numeric(remove = c("start", "end", "epoch", "duration"),
-                    add.total.duration = FALSE) |>    # count number of episodes per day
-  mean_daily(prefix = "Frequency of ") |>             # compute daily mean frequency
+                    add.total.duration = FALSE) |>    # <5>
+  mean_daily(prefix = "Frequency of ") |>             # <6>
   gt() |> fmt_number() 
 ```
 
+1. Condition: near-work distance
+2. Minimum duration of a continuous episode
+3. Maximum gap allowed within an episode
+4. Keep days with zero episodes in output
+5. Count number of episodes per day
+6. Compute daily mean frequency
+
+
 ```{r}
 #| label: fig-visbreak
-#| fig-cap: "Example of continuous near-work episodes. Red shaded areas indicate periods of continuous near work (20–60 cm for ≥30 min, allowing ≤1 min interruptions). Black trace is viewing distance over time; red dashed lines mark the 20 cm and 60 cm boundaries."
+#| filename: Plot continuous near-work episodes
+#| fig-cap: "Example of continuous near-work episodes. Red shaded areas indicate periods of continuous near work (20–60 cm for ≥30 min, allowing ≤1 min interruptions). Black trace is viewing distance over time; red dashed lines mark the 20 cm and 60 cm boundaries. Grey shaded areas indicate nighttime."
 #| warning: false
 #| fig-height: 8
-dataCC |> 
-  add_clusters(
-    Dis >= 20 & Dis < 60,
-    cluster.duration = "30 mins",
-    interruption.duration = "1 min"
-  ) |> 
+dataCC |> # <1>
+  add_clusters(# <1>
+    Dis >= 20 & Dis < 60,# <1>
+    cluster.duration = "30 mins",# <1>
+    interruption.duration = "1 min"# <1>
+  ) |> # <1>
   gg_day(y.axis = Dis, y.axis.label = "Distance (cm)", geom = "line",
          y.scale = "identity", y.axis.breaks = seq(0,100, by = 20)) |> 
-  gg_state(state, fill = "red") + #add state bands
+  gg_photoperiod(coordinates) |># <2>
+  gg_state(state, fill = "red") + # <3>
   geom_hline(yintercept = c(20, 60), col = "red", linetype = "dashed") +
   coord_cartesian(ylim = c(0,100))
+```
+
+1. As in code cell above
+2. Add photoperiod information
+2. Add state bands
+
+
+```{r}
+#| echo: false
+#| output: false
 ggsave("manuscript/figures/Figure2.png",
                 width = 9,
                 height = 9)
@@ -304,67 +384,101 @@ ggsave("manuscript/figures/Figure2.png",
 
 #### Near-work episodes
 
-Beyond frequency, we can characterize near-work episodes by their duration and typical viewing distance. This section extracts all near-work episodes (using a shorter minimum duration to capture more routine near-work bouts) and summarizes three aspects: (1) frequency (count of episodes per day), (2) average duration of episodes, and (3) average distance during those episodes. These results are combined in @tbl-nearworkepisodes.
+Beyond frequency, we can characterize near-work episodes by their duration and typical viewing distance. This section extracts all near-work episodes (using a 5-second minimum duration to capture more routine near-work bouts) and summarizes three aspects: 
+
+1. frequency (count of episodes per day), 
+2. average duration of episodes, and 
+3. average distance during those episodes. 
+
+These results are combined in @tbl-nearworkepisodes.
 
 ```{r}
 #| label: tbl-nearworkepisodes
+#| filename: Calculate near-work episodes
 #| tbl-cap: "Near-work episodes: frequency, mean duration, and mean viewing distance"
 dataCC |> 
   extract_clusters(
     Dis >= 20 & Dis < 60,
-    cluster.duration = "5 secs",    # minimal duration to count as an episode (very short to capture all)
+    cluster.duration = "5 secs",    # <1>
     interruption.duration = "20 secs",
     drop.empty.groups = FALSE
   ) |> 
-  extract_metric(dataCC, distance = mean(Dis, na.rm = TRUE)) |>  # calculate mean distance during each episode
-  summarize_numeric(remove = c("start", "end", "epoch"), prefix = "",
-                    add.total.duration = FALSE) |>  
-  mean_daily(prefix = "") |>    # daily averages for each metric
-  gt() |> fmt_number(c(distance, episodes), decimals = 0) |> #table
-  cols_units(distance = "cm")
+  extract_metric(dataCC, distance = mean(Dis, na.rm = TRUE)) |>  # <2>
+  summarize_numeric(remove = c("start", "end", "epoch"), # <3>
+                    prefix = "", #<3>
+                    add.total.duration = FALSE) |>  #<3>
+  mean_daily(prefix = "") |>    # <4>
+  gt() |> # <5>
+  fmt_number(c(distance, episodes), decimals = 0) |> # <5>
+  cols_units(distance = "cm") # <5>
 ```
 
-> In the above, `extract_metric(..., distance = mean(Dis, ...))` computes the mean viewing distance during each episode, and the subsequent `summarize_numeric` and `mean_daily` steps derive daily averages of episode count, duration, and distance.
+1. Minimal duration to count as an episode (set to interval level of `dataCC`)
+2. Calculate mean distance during each episode
+3. Calculate averages for all numeric columns per group
+4. Daily averages for each metric
+5. Table generation
+
+> In the code cell above, `extract_metric(..., distance = mean(Dis, ...))` computes the mean viewing distance during each episode, and the subsequent `summarize_numeric` and `mean_daily` steps derive daily averages of episode count, duration, and distance.
 
 #### Visual breaks
 
-`Visual breaks` are a little different, compared to the previous metrics. The difference is that, in this case, the minimum break and the previous episode is important. This leads to a two step process, where we first extract instances of `Distance` above 100 cm for at least 20 seconds, before we filter for a previous duration of at maximum 20 minutes. @tbl-visualbreaks provides the daily frequency of visual breaks.
+`Visual breaks` as defined in this article, require a minimum break-length, and the previous episode is important. This leads to a two step process, where we first extract instances of `Distance` above 100 cm for at least 20 seconds, before we filter for a previous duration of at maximum 20 minutes. @tbl-visualbreaks provides the daily frequency of visual breaks.
 
 ```{r}
 #| label: tbl-visualbreaks
+#| filename: Calculate visual breaks
 #| tbl-cap: "Frequency of visual breaks"
 dataCC |> 
-  extract_clusters(Dis >= 100, #define the condition, greater 100 cm away
-                   cluster.duration = "20 secs", #define the minimum duration
-                   return.only.clusters = FALSE, #return non-clusters as well
-                   drop.empty.groups = FALSE #keep all days, even without clusters
+  extract_clusters(Dis >= 100, # <1>
+                   cluster.duration = "20 secs", #<2>
+                   return.only.clusters = FALSE, #<3>
+                   drop.empty.groups = FALSE # <4>
                    ) |> 
-  # return only clusters with previous episode lengths of maximum 20 minutes:
-  filter((start - lag(end) <= duration("20 mins")), is.cluster) |> 
-  summarize_numeric(remove = c("start", "end", "epoch", "is.cluster", "duration"), 
-                    prefix = "",
-                    add.total.duration = FALSE) |>  #count the number of episodes
-  mean_daily(prefix = "Daily ") |> #daily means
-  gt() |> fmt_number(decimals = 1) #table
+  filter((start - lag(end) <= duration("20 mins")), is.cluster) |> #<5>
+  summarize_numeric(remove = c("start", "end", "epoch", "is.cluster", "duration"), #<6>
+                    prefix = "", #<6>
+                    add.total.duration = FALSE) |>  #<6>
+  mean_daily(prefix = "Daily ") |> # <7>
+  gt() |> #<8>
+  fmt_number(decimals = 1) #<8>
 ```
+
+1. Define the condition, greater 100 cm away
+2. Define the minimum duration
+3. Return non-clusters as well
+4. Keep all days, even without clusters
+5. Return only clusters with previous episode lengths of maximum 20 minutes
+6. Count the number of episodes
+7. Calculate daily means
+8. Table generation
 
 ```{r}
 #| label: fig-cluster
+#| filename: Plot visual breaks
 #| fig-cap: "Plot of visual breaks (red dots). Black traces show distance measurement data. Grey shaded areas show nighttime between civil dusk and civil dawn"
 #| warning: false
 #| fig-height: 8
-dataCC |> 
-    extract_clusters(Dis >= 100, #define the condition, greater 100 cm away
-                   cluster.duration = "20 secs", #define the minimum duration
-                   return.only.clusters = FALSE, #return non-clusters as well
-                   drop.empty.groups = FALSE #keep all days, even without clusters
-                   ) |> 
-  # return only clusters with previous episode lengths of maximum 20 minutes:
-  filter((start - lag(end) <= duration("20 mins")), is.cluster) %>%
-  add_states(dataCC, ., ) |> 
+dataCC |> # <1>
+    extract_clusters(Dis >= 100, # <1>
+                   cluster.duration = "20 secs", # <1>
+                   return.only.clusters = FALSE, # <1>
+                   drop.empty.groups = FALSE # <1>
+                   ) |> # <1>
+  filter((start - lag(end) <= duration("20 mins")), is.cluster) %>% # <1>
+  add_states(dataCC, ., ) |>  # <2>
   gg_day(y.axis = Dis, y.axis.label = "Distance (cm)", geom = "line") |> 
-  gg_photoperiod(coordinates) +
+  gg_photoperiod(coordinates) + # <3>
   geom_point(data = \(x) filter(x, is.cluster), col = "red")
+```
+
+1. As in the code cell above
+2. Add the resulting states
+3. Add photoperiod information to the plot
+
+```{r}
+#| echo: false
+#| output: false
 ggsave("manuscript/figures/Figure3.png",
                 width = 9,
                 height = 9)
@@ -372,17 +486,10 @@ ggsave("manuscript/figures/Figure3.png",
 
 #### Distance with spatial distribution
 
-The `Clouclip` device outputs a singular measure for distance, while the visual environment in natural conditions contains many distances, depending on the solid angle and direction of the measurement. A device like the `VEET` increases the spatial resolution of these measurements, allowing for more in-depth analyses of the size and position of an object within the field of view. In the case of the `VEET`, data are collected from an 8x8 measurement grid, spanning 52° vertically and 41° horizontally. Here are exemplary observations from six different days at the same time.
+The `Clouclip` device outputs a singular measure for distance, while the visual environment in natural conditions contains many distances, depending on the solid angle and direction of the measurement. A device like the `VEET` increases the spatial resolution of these measurements, allowing for more in-depth analyses of the size and position of an object within the field of view. In the case of the `VEET`, data are collected from an 8x8 measurement grid, spanning 52° vertically and 41° horizontally. Here are sample observations from six different days at the same time.
 
 ```{r}
-#| label: fig-VEET-distance
-#| fig-cap: "Example observations of the measurement grid at 1:14 p.m. for each measurement day. Text values show distance in cm. Empty grid points show values with low confidence. Zero-distance values were replaced with infinite distance and plotted despite low confidence."
-#| fig-height: 5
-#| fig-width: 12
-
-slicer <- function(x){seq(min((x-1)*64+1), max(x*64), by = 1)} #allows to choose an observation
-
-#set visualization parameters
+#| filename: Collect plot partials to plot the spatial distance grids
 extras <- list(
   geom_tile(),
   scale_fill_viridis_c(direction = -1, limits = c(0, 200),
@@ -391,69 +498,116 @@ extras <- list(
   theme_minimal(),
   guides(colour = "none"),
   geom_text(aes(label = (dist1/10) |> round(0), colour = dist1>1000), size = 2.5),
-  coord_fixed(),
-  labs(x = "X position (°)", y = "Y position (°)", 
+  coord_fixed(),#<2>
+  labs(x = "X position (°)", y = "Y position (°)",
        fill = "Distance (cm)", alpha = "Confidence (0-255)"))
+```
 
+```{r}
+#| label: fig-VEET-distance
+#| filename: Plot spatial distance grids for different days
+#| fig-cap: "Example observations of the measurement grid at 1:14 p.m. for each measurement day. Text values show distance in cm. Empty grid points show values with low confidence. Zero-distance values were replaced with infinite distance and plotted despite low confidence."
+#| fig-height: 5
+#| message: false
+#| warning: false
+#| fig-width: 12
 dataVEET3 |> 
-  slice(slicer(9530)) |>  #choose a particular observation
-  mutate(dist1 = ifelse(dist1 == 0, Inf, dist1)) |> #replace 0 distances with infinity
-  filter(conf1 >= 0.1 | dist1 == Inf) |> #remove data that has less than 10% confidence
-  ggplot(aes(x=x.pos, y=y.pos, fill = dist1/10))+ extras + #plot the data
-  facet_wrap(~Datetime) #show one plot per day
+  filter_Time(start = "13:14:02", length = "00:00:05") |> #<1>
+  mutate(dist1 = ifelse(dist1 == 0, Inf, dist1)) |> #<2>
+  filter(conf1 >= 0.1 | dist1 == Inf) |> #<3>
+  ggplot(aes(x=x.pos, y=y.pos, fill = dist1/10))+ #<4>
+  extras + #<4>
+  facet_wrap(~Datetime) #<5>
+```
+
+1. Choose a particular observation
+2. Replace 0 distances with infinity
+3. Remove data that has less than 10% confidence
+4. Plot the data and add the plot partials from the code cell above
+5. Show one plot per day
+
+```{r}
+#| echo: false
+#| output: false
 ggsave("manuscript/figures/Figure4.png",
                 width = 8,
                 height = 6)
 ```
 
-To use these distance data in the framework shown above for the `Clouclip` device, a sensible method to condense the data has to be applied. This method has to be chosen based on theoretical assumptions about what a relevant distance within the field of view is. Possible methods include:
+To use these distance data in the framework shown above for the `Clouclip` device, a sensible method to condense the data has to be applied. There are many ways how a spatially resolved distance measure could be utilized for analysis:
+
+- Where in the field of view are objects in close range?
+- How large are near objects in the field of view?
+- How varied are distances within the field of view?
+- How close are objects / is viewing distance in a region of interest within the field of view?
+
+Possible methods include:
 
 - average across all (high confidence) distance values within the grid
 - closest (high confidence) distance within the grid
 - (high confidence) values at or around a given grid position, e.g., ±10 degrees around the central view (0°)
 
-Many more options are available based on the richer dataset, e.g., condensation rules based on the number of points in the grid with a given condition, or the variation within the grid.
+Many more options are available based on the spatial dataset, e.g., condensation rules based on the number of points in the grid with a given condition, or the variation within the grid.
 
-We will demonstrate these three exemplary methods for a single day (`2024-06-10`), all leading to a data structure akin to the `Clouclip`, i.e., to be used for further calculation of visual experience metrics.
+We will demonstrate these three methods for a single day (`2024-06-10`), all leading to a data structure akin to the `Clouclip`, i.e., to be used for further calculation of visual experience metrics.
 
 ```{r}
 #| label: fig-VEET-distance_methods
+#| filename: Calculating and plotting method results
 #| fig-cap: "Comparison of condensation methods for spatial grid of distance measurements. The lines represent an average across all data points (yellow), the minimum distance (grey), or the central 10° (blue). Data points with confidence less than 10% were removed prior to calculation."
 #| fig-height: 5 
 #| fig-width: 8
-dataVEET3_part <- #filter one day
-dataVEET3 |>
-  filter_Date(start = "2024-06-10", length = "1 day")
+dataVEET3_part <- #<1>
+dataVEET3 |> #<1>
+  filter_Date(start = "2024-06-10", length = "1 day") #<1>
 
 dataVEET3_condensed <- 
 dataVEET3_part |> 
-  group_by(Datetime, .add = TRUE) |> #group additionally by every observation
-  filter(conf1 >= 0.1) |> #remove data with low confidence
+  group_by(Datetime, .add = TRUE) |> #<2>
+  filter(conf1 >= 0.1) |> #<3>
   summarize(
-    distance_mean = mean(dist1), #average across all distance values,
-    distance_min = min(dist1), #closest across all distance values,
-    distance_central = mean(dist1[between(x.pos, -10,10) & between(y.pos, -10,10)]), #central distance
-    n = n(), #number of (valid) grid points
+    distance_mean = mean(dist1), #<4>
+    distance_min = min(dist1), #<5>
+    distance_central = mean(dist1[between(x.pos, -10,10) & between(y.pos, -10,10)]), #<6>
+    n = n(), #<7>
     .groups = "drop_last"
   )
 
 dataVEET3_condensed |> 
-  aggregate_Datetime("15 mins", numeric.handler = \(x) mean(x, na.rm = TRUE)) |> #create 15 minute data
-  remove_partial_data(by.date = TRUE) |> #remove midnight data points
-  pivot_longer(contains("distance"), #put all methods into a long file for plotting
-               names_to = c(".value", "method"),
-    names_pattern = "(distance)_(mean|min|max|central)"
-    ) |>
-  gg_day(y.axis = distance/10, 
-         geom = "line", 
-         aes_col = method,
-         group = method,
-         linewidth = 1, 
-         alpha = 0.75, 
-         y.scale = "identity",
-         y.axis.breaks = seq(0,150, by = 20), 
-         y.axis.label = "Distance (cm)"
-         )
+  aggregate_Datetime("15 mins", numeric.handler = \(x) mean(x, na.rm = TRUE)) |> #<8>
+  remove_partial_data(by.date = TRUE) |> #<9>
+  pivot_longer(contains("distance"), #<10>
+               names_to = c(".value", "method"), #<10>
+    names_pattern = "(distance)_(mean|min|max|central)" #<10>
+    ) |> #<10>
+  gg_day(y.axis = distance/10, #<11>
+         geom = "line", #<11>
+         aes_col = method,#<11>
+         group = method,#<11>
+         linewidth = 1, #<11>
+         alpha = 0.75, #<11>
+         y.scale = "identity",#<11>
+         y.axis.breaks = seq(0,150, by = 20), #<11>
+         y.axis.label = "Distance (cm)"#<11>
+         ) |> #<11>
+  gg_photoperiod(coordinates) #<11>
+```
+
+1. Filter one day
+2. Group additionally by every observation
+3. Remove data with low confidence
+4. Average across all distance values
+5. Closest across all distance values
+6. Central distance
+7. Number of (valid) grid points
+8. Aggregate to 15 minute data
+9. Remove data points that fall exactly on midnight of the following day
+10. Pivoting the method results from wide to long for plotting
+11. Setting up the plot for distance.
+
+```{r}
+#| echo: false
+#| output: false
 ggsave("manuscript/figures/Figure5.png",
                 width = 7,
                 height = 4)
@@ -463,57 +617,66 @@ As can be seen in @fig-VEET-distance_methods, while the overall pattern is simil
 
 ### Light {#light}
 
-The `Clouclip` illuminance data in our example are extremely low (the device was mostly used in dim conditions), which would make certain light exposure summaries trivial or not meaningful. To better illustrate light exposure metrics, we turn to the exemplary `VEET` device’s illuminance data, which capture a broader range of lighting conditions. We import the `VEET` ambient light data (already preprocessed to have regular 5-second intervals as described above) and briefly examine its distribution.
+The `Clouclip` illuminance data in our example cover indoor environments and are thus comparatively low, which would make certain daylight exposure summaries trivial or not meaningful. To better illustrate light exposure metrics, we turn to a different dataset, this one taken from the `VEET` device’s illuminance data, which capture a broader range of lighting conditions (though both device types are able to capture broadly the same range of illuminance). We import the `VEET` ambient light data (already preprocessed to have regular 5-second intervals as described above) and briefly examine its distribution.
 
-**Illuminance distribution**: The illuminance values from the `Clouclip` were almost always near zero, while the `VEET` data include outdoor exposures up to several thousand lux. The contrast is evident from comparing histograms of the two datasets’ lux values (`Clouclip` vs. `VEET`). The `VEET` illuminance histogram (see @fig-hist-VEETlight) shows a heavily skewed distribution with a spike at zero (indicating many intervals of complete darkness or the sensor being covered) and a long tail extending to very high lux values. Such zero-inflated and skewed data are common in wearable light measurements [@ZaunerEtAl2025JBR].
+**Illuminance distribution**: The illuminance values from the `Clouclip` were comparatively low, while the `VEET` data include outdoor exposures up to several thousand lux. The contrast is evident from comparing histograms of the two datasets’ lux values (`Clouclip` vs. `VEET`), where the main peak is similarly positioned between 10 and 100 lx, but the tails differ. The `VEET` illuminance histogram (see @fig-hist-VEETlight) shows a heavily skewed distribution with a considerable number of zero lx values (indicating intervals of complete darkness or the sensor being covered) and a long tail extending to very high lux values. Such zero-inflated and skewed data are common in wearable light measurements [@ZaunerEtAl2025JBR]. 
 
 ```{r}
 #| label: fig-hist-CClight
 #| column: margin
+#| warning: false
 #| echo: false
-#| fig-cap: "Histogram of illuminance values from the Clouclip dataset (5-second data). The values are very low and are typical of indoor conditions."
+#| fig-cap: "Histogram of illuminance values from the Clouclip dataset (5-second data). The values are typical of indoor conditions."
 dataCC |> 
   ggplot(aes(x = Lux)) + 
-  labs(x = "Photopic illuminance (lx)", y = "Count (n)") +
-  geom_histogram(bins = 100) + 
+  labs(x = "Photopic illuminance (lx)", y = "Relative count") +
+  geom_histogram(binwidth = 0.05, aes(y=after_stat(ncount))) + 
   theme_minimal() +
-  scale_x_continuous(trans = "symlog", breaks = c(0, 1, 10, 100, 1000))
+  scale_x_continuous(trans = "symlog", breaks = c(0, 1, 10, 100, 1000, 10000)) +
+  scale_y_continuous(labels = ~vec_fmt_percent(.x, decimals = 0)) +
+  coord_cartesian(xlim = c(0, 5*10^4), ylim = c(0, 1))
 ggsave("manuscript/figures/Figure6.png",
                 width = 7,
                 height = 4)
 ```
 
+
+
 ```{r}
 #| label: fig-hist-VEETlight
 #| column: margin
 #| echo: false
-#| fig-cap: "Histogram of illuminance values from the VEET dataset (aggregated to 5 s). Note the logarithmic x-axis: the distribution is highly skewed with many low values (including zeros) and a long tail of high lux readings."
+#| warning: false
+#| fig-cap: "Histogram of illuminance values from the VEET dataset (aggregated to 5 s). Note the logarithmic x-axis: the distribution is highly skewed with many low values (including zeros) and a long tail of high lux readings. Outdoor light exposures in bright conditions are distinguishable around 10^3 to 10^4 lx."
 dataVEET |> 
   ggplot(aes(x = Lux)) + 
-  labs(x = "Photopic illuminance (lx)") +
-  geom_histogram(bins = 100) + 
+  labs(x = "Photopic illuminance (lx)", y = "Relative count") +
+  geom_histogram(binwidth = 0.05, aes(y=after_stat(ncount))) + 
   theme_minimal() +
-  scale_x_continuous(trans = "symlog", breaks = c(0, 1, 10, 100, 1000, 10000))
+  scale_x_continuous(trans = "symlog", breaks = c(0, 1, 10, 100, 1000, 10000)) +
+  scale_y_continuous(labels = ~vec_fmt_percent(.x, decimals = 0)) +
+  coord_cartesian(xlim = c(0, 5*10^4), ylim = c(0, 1))
 ggsave("manuscript/figures/Figure7.png",
                 width = 7,
                 height = 4)
 ```
 
-After confirming that the VEET data cover a broad dynamic range of lighting, we proceed with calculating light exposure metrics. (The VEET data had been cleaned for gaps and irregularities as described earlier; see [Supplement 1](https://tscnlab.github.io/ZaunerEtAl_JVis_2025/supplement-preview.html) for the gap summary table.)
+After confirming that the `VEET` data cover a broad dynamic range of lighting, we proceed with calculating light exposure metrics. (The VEET data had been cleaned for gaps and irregularities as described earlier, and non-wear times were removed; see [Supplement 1](supplement.qmd) for the details.)
 
-#### Average light exposure
+#### Average light exposure {#sec-avelight}
 
 A basic metric is the average illuminance over the day. @tbl-lightexposure shows the mean illuminance (in lux) for weekdays, weekends, and the overall daily mean, calculated directly from the raw lux values.
 
 ```{r}
 #| label: tbl-lightexposure
+#| filename: Calculating mean light exposure per day
 #| tbl-cap: "Mean light exposure (illuminance) per day"
 dataVEET |> 
   select(Id, Date, Datetime, Lux) |> 
   summarize_numeric(prefix = "mean ", remove = c("Datetime")) |> 
-  to_mean_daily() |>             # compute mean for weekday, weekend, all days
+  to_mean_daily() |>
   fmt_number(decimals = 1) |> 
-  cols_hide(`average episodes`) |>  # hide an irrelevant column (episodes count)
+  cols_hide(`average episodes`) |>
   cols_label(`average mean Lux` = "Mean photopic illuminance (lx)")
 ```
 
@@ -521,25 +684,33 @@ However, because illuminance data tend to be extremely skewed and contain many z
 
 ```{r}
 #| label: tbl-lightexposure2
+#| filename: Calculating mean light exposure per day with log transformation
 #| tbl-cap: "Mean light exposure per day (after logarithmic transformation to account for zero inflation and skewness)"
 dataVEET |> 
   select(Id, Date, Datetime, Lux) |> 
-  mutate(Lux = Lux |> log_zero_inflated()) |>        # log-transform with zero handling
+  mutate(Lux = Lux |> log_zero_inflated()) |>        # <1>
   summarize_numeric(prefix = "mean ", remove = c("Datetime")) |> 
-  mean_daily(prefix = "") |>                         # get daily mean of log-lux
-  mutate(`mean Lux` = `mean Lux` |> exp_zero_inflated()) |>  # back-transform to lux
+  mean_daily(prefix = "") |>                         # <2>
+  mutate(`mean Lux` = `mean Lux` |> exp_zero_inflated()) |>  # <3>
   gt() |> fmt_number(decimals = 1) |> cols_hide(episodes) |> 
   cols_label(`mean Lux` = "Mean photopic illuminance (lx)")
 ```
 
-#### Duration in high-light (outdoor) conditions
+1. Log transform with zero handling (base 10)
+2. Calculate daily mean of log-lux
+3. Back-transform to lux
 
-Another important metric is the amount of time spent under bright light, often used as a proxy for outdoor exposure. We define thresholds corresponding to outdoor light levels (e.g. 1000 lx and above). Here, we categorize each 5-second interval of illuminance into bands: Outdoor bright (≥1000 lx), Outdoor very bright (≥2000 lx), and Outdoor extremely bright (≥3000 lx). We then sum the duration in each category per day. We first create a categorical variable for illuminance range:
+#### Duration in high-light (outdoor) conditions {#sec-outdoorlight}
+
+Another important metric is the amount of time spent under bright light, often used as a proxy for outdoor exposure. We define thresholds corresponding to outdoor light levels (e.g. 1000 lx and above). Here, we categorize each 5-second interval of illuminance into bands: Outdoor bright (≥1000 lx), Outdoor very bright (≥2000 lx), and Outdoor extremely bright (≥3000 lx). We then sum the duration in each category per day. 
+
+While daylight levels can far exceed the recorded light levels, those are usually recorded with direct sunlight and without obstruction. Under normal viewing conditions, at eye level, and avoiding glare, daylight levels of a few thousand lux are at the higher end of the distribution [@murukesu2025ADID]. @fig-hist-VEETlight shows a bimodal distribution, with the right mode representing outdoor lighting conditions. In a 2023 review of light dosimeters to investigate the light-myopia relationship [@Honekopp2023ClinOphthalmol], 1000 lx was the predominant cutoff value to distinguish indoor vs. outdoor environments. It is not, however, without critique, and both other thresholds [@pattersongentile2025] and classification methods are proposed [@tabandeh2025].
 
 ```{r}
-# Define outdoor illuminance thresholds (in lux)
-out_breaks <- c(1e3, 2e3, 3e3, Inf)
+#| filename: Define outdoor illuminance thresholds (in lux)
+out_breaks <- c(0, 1e3, 2e3, 3e3, Inf)
 out_labels <- c(
+    "Indoor",                  # [0, 1000) lx
     "Outdoor bright",          # [1000, 2000) lx
     "Outdoor very bright",     # [2000, 3000) lx
     "Outdoor extremely bright" # [3000, ∞) lx
@@ -553,11 +724,12 @@ Now we compute the mean daily duration spent in each of these outdoor light rang
 
 ```{r}
 #| label: tbl-outdoor
+#| filename: Calculate the mean daily duration spent in each light range
 #| tbl-cap: "Average daily duration in outdoor-equivalent light conditions"
 dataVEET |> 
   drop_na(Lux_range) |> 
   group_by(Lux_range, .add = TRUE) |> 
-  durations(Lux) |>                            # total duration per range per day
+  durations(Lux) |>                         
   pivot_wider(names_from = Lux_range, values_from = duration) |> 
   to_mean_daily("") |> 
   fmt_duration(input_units = "seconds", output_units = "minutes")
@@ -569,15 +741,33 @@ It is also informative to visualize when these high-light conditions occurred. @
 #| fig-height: 8
 #| fig-width: 9
 #| warning: false
+#| filename: Visualize time spent outdoors
 #| label: fig-outdoor
 #| fig-cap: "Outdoor light exposure over time. Colored bands indicate periods when illuminance exceeded outdoor thresholds: violet for ≥1000 lx, green for ≥2000 lx, and yellow for ≥3000 lx. Grey shaded regions denote night (from civil dusk to dawn)."
 dataVEET |> 
-  gg_day(y.axis = Lux, y.axis.label = "Photopic illuminance (lx)", geom = "line", jco_color = FALSE) |> 
-  gg_state(Lux_range, aes_fill = Lux_range, alpha = 0.75) |> 
-  gg_photoperiod(coordinates) +
+  aggregate_Datetime("2 mins", type = "floor") |> #<1>
+  mutate(Lux_range = na_if(Lux_range, "Indoor")) |> #<2>
+  gg_day(y.axis = Lux, #<3>
+         y.axis.label = "Photopic illuminance (lx)", #<3>
+         geom = "line", #<3>
+         jco_color = FALSE) |> #<3>
+  gg_state(Lux_range, aes_fill = Lux_range, #<4>
+           alpha = 0.75, ymin = 10^3, ymax = 10^4) + #<4>
   scale_fill_viridis_d() +
   labs(fill = "Illuminance range") +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom") +
+  coord_cartesian(xlim = c(8, 19.5)*3600) #<5>
+```
+
+1. Aggregating data to 5-minute bins
+2. Removing the indoor condition
+3. Setting up the basic plot
+4. Adding state information on the illuminance ranges
+5. Setting the x-axis limits to cover daytime hours
+
+```{r}
+#| echo: false
+#| output: false
 ggsave("manuscript/figures/Figure8.png",
                 width = 9,
                 height = 9)
@@ -591,22 +781,28 @@ We next consider how often the subject moved from an indoor light environment to
 
 ```{r}
 #| label: tbl-changesoutdoor
+#| filename: Calculate the number of transitions from indoor to outdoor
 #| tbl-cap: "Average daily count of transitions from indoor (<1000 lx) to outdoor (≥1000 lx) lighting when looking at 5-second epochs"
 dataVEET |> 
-  extract_states(Outdoor, Lux >= 1000, group.by.state = FALSE) |>  # label each interval as Outdoor (Lux≥1000) or not
-  filter(!lead(Outdoor) & Outdoor) |>   # find instances where the previous interval was "indoor" and current is "outdoor"
+  extract_states(Outdoor, Lux >= 1000, group.by.state = FALSE) |>  # <1>
+  filter(!lead(Outdoor) & Outdoor) |>   #<2>
   summarize_numeric(prefix = "mean ",
     remove = c("Datetime", "Outdoor", "start", "end", "duration"),
     add.total.duration = FALSE) |> 
   mean_daily(prefix = "") |> 
-  gt() |> fmt_number(episodes, decimals = 0) |> 
+  gt() |> 
+  fmt_number(episodes, decimals = 0) |> 
   fmt_duration(`mean epoch`, input_units = "seconds", output_units = "seconds")
 ```
+
+1. Label each interval as Outdoor (Lux≥1000) or not
+2. Find instances where the previous interval was "indoor" and current is "outdoor"
 
 To obtain a more meaningful measure, we can require that the outdoor state persists for some minimum duration to count as a true transition (filtering out momentary fluctuations around the 1000 lx mark). For example, we can require that once ≥1000 lx is reached, it continues for at least 5 minutes (allowing short interruptions up to 20 s). @tbl-changesoutdoor2 applies this criterion, resulting in a lower, more plausible transition count.
 
 ```{r}
 #| label: tbl-changesoutdoor2
+#| filename: Calculate the number of transitions from indoor to outdoor with clusters
 #| tbl-cap: "Daily indoor-to-outdoor transition count (requiring ≥5 min duration of ≥1000 lx to count)"
 dataVEET |> 
   extract_clusters(Lux >= 1000,
@@ -624,27 +820,57 @@ dataVEET |>
 
 #### Longest sustained bright-light period
 
-The final light exposure metric we illustrate is the longest continuous period above a certain illuminance threshold (often termed Longest Period Above Threshold, e.g. PAT<sub>1000</sub> for 1000 lx). This gives a sense of the longest outdoor exposure in a day. Along with it, one might report the total duration above that threshold in the day (TAT<sub>1000</sub>). While we could derive these from the earlier analyses, LightLogR provides dedicated [metric](https://tscnlab.github.io/LightLogR/articles/Metrics.html) functions for such calculations, which can compute multiple related metrics at once. 
+The final light exposure metric we illustrate is the longest continuous period above a certain illuminance threshold (often termed longest period above threshold, e.g. PAT<sub>1000</sub> for 1000 lx). This gives us a sense of the longest outdoor exposure in a day. Along with it, one might report the total duration above that threshold in the day (TAT<sub>1000</sub>). While we could derive these from the earlier analyses, LightLogR provides dedicated [metric](https://tscnlab.github.io/LightLogR/articles/Metrics.html) functions for such calculations, which can compute multiple related metrics at once. 
 
 Using the function [period_above_threshold()](https://tscnlab.github.io/LightLogR/reference/period_above_threshold.html) for PAT and [duration_above_threshold()](https://tscnlab.github.io/LightLogR/reference/duration_above_threshold.html) for TAT, we calculate both metrics for the 1000 lx threshold. @tbl-periodoutdoor shows the mean of these metrics across days (i.e., average longest bright period and average total bright time per day).
 
 ```{r}
 #| label: tbl-periodoutdoor
-#| tbl-cap: "Longest period and total duration above 1000 lx (PAT1000 and TAT1000)"
+#| filename: Calculate PAT1000 and TAT1000
+#| tbl-cap: "Longest period and total duration illuminance above 1000 lx (PAT1000 and TAT1000)"
 dataVEET |> 
   summarize(
-    period_above_threshold(Lux, Datetime, threshold = 1000, na.rm = TRUE, as.df = TRUE),
-    duration_above_threshold(Lux, Datetime, threshold = 1000, na.rm = TRUE, as.df = TRUE),
+    period_above_threshold(
+      Lux, Datetime, threshold = 1000, na.rm = TRUE, as.df = TRUE),
+    duration_above_threshold(
+      Lux, Datetime, threshold = 1000, na.rm = TRUE, as.df = TRUE),
     .groups = "keep"
   ) |> 
   to_mean_daily("")
 ```
 
+#### Merging data streams
+
+Note that while imports from different devices can be [merged](https://tscnlab.github.io/LightLogR/reference/join_datasets.html), devices differ in their sensors, electronics, housing or diffuser form factors, and on-device data-processing pipelines. All of these factors affect the comparability of measurements, even when devices output the same variable (e.g., illuminance or distance). If data from different devices with the same measurement variable are to be merged, the corresponding variable names should be standardized beforehand - for example, renaming `Lux` and `LIGHT` to `illuminance`. If we wanted to analyse the `VEET` data together with the `Clouclip` data, for example, we would not have to rename anything, as both carry their illuminance measurements in the variable `Lux`. The following example shows how the combination of datasets would lead to a combined dataset, and how that would affect analysis outcomes. **It is the responsibility of the researcher to perform device calibration and/or checks for a similar measurement fidelity.**
+
+```{r}
+#| filename: Merge Clouclip and VEET data
+data <- join_datasets(dataCC, dataVEET)
+data |> summary_overview(Lux, threshold.missing = 0.5) |> gt()
+```
+
+We will reuse the example from @sec-avelight, but instead of one participant, we now have data from two devices and participants
+
+```{r}
+#| filename: Re-calculate mean photopic illuminance with the merged dataset
+data |> # <1>
+  select(Id, Date, Datetime, Lux) |> # <2>
+  mutate(Lux = Lux |> log_zero_inflated()) |> # <2>       
+  summarize_numeric(prefix = "mean ", remove = c("Datetime")) |> # <2>
+  mean_daily(prefix = "") |>                         # <2>
+  mutate(`mean Lux` = `mean Lux` |> exp_zero_inflated()) |>  # <2>
+  gt() |> fmt_number(decimals = 1) |> cols_hide(episodes) |> # <2>
+  cols_label(`mean Lux` = "Mean photopic illuminance (lx)")# <2>
+```
+
+1. Instead of `dataVEET` we now supply the merged `data` object
+2. Verbatim from @sec-avelight
+
 ### Spectrum
 
-The `VEET` device’s spectral sensor provides rich data beyond simple lux values, but it requires reconstruction of the actual light spectrum from raw sensor counts. We processed the spectral sensor data in order to compute two example spectrum-based metrics. Detailed data import, normalization, and spectral reconstruction steps are given in [Supplement 1](https://tscnlab.github.io/ZaunerEtAl_JVis_2025/supplement-preview.html); here we present the resulting metrics. Briefly, the `VEET`’s spectral sensor recorded counts in ten wavelength bands (roughly 415 nm to 910 nm), plus a `Dark` and a `Clear` channel[^fw]. After normalizing by sensor gain and applying the calibration matrix, we obtained an estimated spectral irradiance distribution for each 5-minute interval in the recording. With these reconstructed spectra, we can derive novel metrics that consider spectral content of the light. 
+The `VEET` device’s spectral sensor provides multimodal data beyond simple lux values, but it requires reconstruction of the actual light spectrum from raw sensor counts. We processed the spectral sensor data in order to compute two example spectrum-based metrics. Detailed data import, normalization, and spectral reconstruction steps are given in [Supplement 1](supplement.qmd); here we present the resulting metrics. Briefly, the `VEET`’s spectral sensor recorded counts in ten wavelength bands (roughly 415 nm to 910 nm), plus a `Dark` and a `Clear` channel[^fw]. After normalizing by sensor gain and applying the calibration matrix, we obtained an estimated spectral irradiance distribution for each 5-minute interval in the recording. With these reconstructed spectra, we can derive novel metrics that consider spectral content of the light. 
 
-[^fw]: Note that older firmware versions contained two `Clear` channels and the highest spectral channel was indicated as 940 nm. Data collected with this early firmware version are not suitable for spectral reconstruction in the context of research projects.
+[^fw]: Note that older firmware versions of the `VEET` prior to *2.1.7* contained two `Clear` channels and the highest spectral channel was indicated as 940 nm. Data collected with this early firmware version are not suitable for spectral reconstruction in the context of research projects.
 
 ::: {.callout-note}
 
@@ -654,35 +880,76 @@ Spectrum-based metrics in wearable data are relatively new and less established 
 
 #### Ratio of short- vs. long-wavelength light
 
-Our first spectral metric is the ratio of short-wavelength light to long-wavelength light, which is relevant, for example, in assessing the blue-light content of exposure. We define "short" wavelengths as 400–500 nm and "long" as 600–700 nm. Using the list-column of spectra in our dataset, we integrate each spectrum over these ranges (using [`spectral_integration()`](https://tscnlab.github.io/LightLogR/reference/spectral_integration.html)), and then compute the ratio short/long for each time interval. We then summarize these ratios per day.
+Our first spectral metric is the ratio of short-wavelength light to long-wavelength light, which is relevant, for example, in assessing the blue-light content of exposure. We define "short" wavelengths as 400–500 nm and "long" as 600–700 nm (which are not standardized threshold and can be freely adjusted). Using the list-column of spectra in our dataset, we integrate each spectrum over these ranges (using [`spectral_integration()`](https://tscnlab.github.io/LightLogR/reference/spectral_integration.html)), and then compute the ratio short/long for each time interval. We then summarize these ratios per day.
 
 ```{r}
+#| filename: Extract wavelength sections and integrate over them
 dataVEET <- dataVEET2 |> 
-  select(Id, Date, Datetime, Spectrum) |>    # focus on ID, date, time, and spectrum
+  select(Id, Date, Datetime, Spectrum) |>    # <1>
   mutate(
-    short = Spectrum |> map_dbl(spectral_integration, wavelength.range = c(400, 500)),
-    long  = Spectrum |> map_dbl(spectral_integration, wavelength.range = c(600, 700)),
-    `sl ratio` = ifelse(is.nan(short / long), NA, short / long)   # compute short-to-long ratio
+    short = 
+      Spectrum |> map_dbl(spectral_integration, wavelength.range = c(400, 500)),
+    long  = 
+      Spectrum |> map_dbl(spectral_integration, wavelength.range = c(600, 700)),
+    `sl ratio` = 
+      ifelse(is.nan(short / long), NA, short / long)   # <2>
   )
 ```
+
+1. Focus on ID, date, time, and spectrum
+2. Compute short-to-long wavelength ratio
 
 @tbl-ratio shows the average short/long wavelength ratio, averaged over each day (and then as weekday/weekend means if applicable). In this dataset, the values give an indication of the spectral balance of the light the individual was exposed to (higher values mean relatively more short-wavelength content).
 
 ```{r}
 #| label: tbl-ratio
+#| filename: Calculate daily average values of short and long wavelength content
 #| tbl-cap: "Average (mW/m²) and ratio of short-wavelength (400–500 nm) to long-wavelength (600–700 nm) light"
 dataVEET |> 
   summarize_numeric(prefix = "", remove = c("Datetime", "Spectrum")) |> 
-  # mean_daily(prefix = "") |>
   gt() |> 
   fmt_number(decimals = 1, scale_by = 1000) |>
   fmt_number(`sl ratio`, decimals = 3) |>
   cols_hide(episodes)
 ```
 
+#### Melanopic daylight efficacy ratio (MDER)
+
+The same idea is behind calculating the melanopic daylight efficacy ratio (or MDER), which is defined by the CIE [@CIE_S026_2018] as the melanopic EDI divided by the photopic illuminance [@Hartmeyer2023LightResTechnol]. Results are shown in @tbl-mder. In this case, instead of a simple integration over a wavelength band, we apply an action spectrum to the spectral power distribution (SPD), integrate over the weighted SPD, and apply a correction factor. All alphaopic action spectra are implemented in the `spectral_integration()` function. These will result in photopic illuminance and melanopic equivalent daylight illuminance (melEDI)
+
+```{r}
+#| filename: Calculate melEDI and illumiance
+#| tbl-cap: "Average (mW/m²) and ratio of short-wavelength (400–500 nm) to long-wavelength (600–700 nm) light"
+dataVEET <- 
+  dataVEET |> 
+  select(Id, Date, Datetime, Spectrum, short, long, `sl ratio`) |>
+  mutate(
+    melEDI = #<1>
+      Spectrum |> map_dbl(spectral_integration, action.spectrum = "melanopic"),#<1>
+    illuminance  = #<2>
+      Spectrum |> map_dbl(spectral_integration, action.spectrum = "photopic")#<2>
+  )
+```
+
+1.  Calculate melanopic EDI by applying the $s_{mel (\lambda)}$ action spectrum, integrating, and weighing
+2.  Calculate photopic illuminance by applying the $V_{(\lambda)}$ action spectrum, integrating, and weighing
+
+```{r}
+#| label: tbl-mder
+#| filename: Calculate MDER
+#| tbl-cap: "Average melanopic daylight efficacy ratio (MDER)"
+dataVEET  |> 
+  summarize_numeric(prefix = "", remove = c("Datetime", "Spectrum")) |> 
+  mutate(MDER = melEDI / illuminance) |>
+  gt() |> 
+  fmt_number(-`sl ratio`, decimals = 1, scale_by = 1000) |>
+  fmt_number(c(MDER, `sl ratio`), decimals = 3) |>
+  cols_hide(episodes)
+```
+
 #### Short-wavelength light at specific times of day
 
-The second spectral example examines short-wavelength light exposure as a function of time of day. Certain studies might be interested in, for instance, blue-light exposure during midday versus morning or night. We demonstrate three approaches: (a) filtering the data to a specific local time window, and (b) aggregating by hour of day to see a daily profile of short-wavelength exposure. Additionally, we (c) look at differences between day and night periods. 
+The third spectral example examines short-wavelength light exposure as a function of time of day. Certain studies might be interested in, for instance, blue-light exposure during midday versus morning or night. We demonstrate three approaches: (a) filtering the data to a specific local time window, and (b) aggregating by hour of day to see a daily profile of short-wavelength exposure. Additionally, we (c) look at differences between day and night periods. 
 
 ::: panel-tabset
 ##### Local morning exposure
@@ -691,16 +958,19 @@ The second spectral example examines short-wavelength light exposure as a functi
 
 ```{r}
 #| label: tbl-shortfilter
+#| filename: Calculate short-wavelength light before noon
 #| tbl-cap: "Average short-wavelength light (400–500 nm) exposure between 7:00 and 11:00 each day"
 dataVEET |> 
-  filter_Time(start = "7:00:00", end = "11:00:00") |>    # filter data to local 7am–11am
-  select(-c(Spectrum, long, `sl ratio`, Time, Datetime)) |>
+  filter_Time(start = "7:00:00", end = "11:00:00") |>    #<1>
+  select(c(Id, Date, short)) |>
   summarize_numeric(prefix = "") |> 
-  # mean_daily(prefix = "") |> 
-  gt() |> fmt_number(short, scale_by = 1000) |> 
+  gt() |> 
+  fmt_number(short, scale_by = 1000) |> 
   cols_label(short = "Short-wavelength irradiance (mW/m²)") |> 
   cols_hide(episodes)
 ```
+
+1. Filter data to local 7am–11am
 
 ##### Hourly profile across the day
 
@@ -708,17 +978,16 @@ To visualize short-wavelength exposure over the course of a day, we aggregate th
 
 ```{r}
 #| label: fig-shorttime
+#| filename: Plot a diurnal profile
 #| fig-cap: "Diurnal profile of short-wavelength light exposure. Each bar represents the average short-wavelength irradiance at that hour of the day (0–23 h), normalized to the daily maximum."
-# Prepare hourly binned data
-dataVEETtime <- dataVEET |>
-  cut_Datetime(unit = "1 hour", type = "floor", group_by = TRUE) |>  # bin timestamps by hour
-  select(-c(Spectrum, long, `sl ratio`, Datetime)) |>
+dataVEETtime <- dataVEET |> #<1>
+  cut_Datetime(unit = "1 hour", type = "floor", group_by = TRUE) |>  #<2>
+  select(-c(Spectrum, long, Datetime)) |>
   summarize_numeric(prefix = "") |> 
-  add_Time_col(Datetime.rounded)  |>   # add a Time column (hour of day)
+  add_Time_col(Datetime.rounded)  |>   # <3>
   mutate(rel_short = short / max(short))
 
-#creating the plot
-dataVEETtime |> 
+dataVEETtime |> #<4>
   ggplot(aes(x=Time, y = rel_short)) +
   geom_col(aes(fill = factor(Date)), position = "dodge") +
   ggsci::scale_fill_jco() +
@@ -728,10 +997,21 @@ dataVEETtime |>
        fill = "Date") + 
   scale_y_continuous(labels = scales::label_percent()) +
   scale_x_time(labels = scales::label_time(format = "%H:%M"))
+```
+
+1. Prepare hourly binned data
+2. Bin timestamps by hour
+3. Add a Time column (hour of day)
+4. Creating the plot
+
+```{r}
+#| echo: false
+#| output: false
 ggsave("manuscript/figures/Figure9.png",
                 width = 5,
                 height = 4)
 ```
+
 
 ##### Day vs. night (photoperiod)
 
@@ -739,23 +1019,24 @@ Finally, we compare short-wavelength exposure during daytime vs. nighttime. Usin
 
 ```{r}
 #| label: tbl-daytime
+#| filename: Calculate photoperiod dependent measures
 #| tbl-cap: "Short wavelength light exposure (mW/m²) during the day and at night"
 dataVEET |>
-  select(-c(Spectrum, long, `sl ratio`)) |>
+  select(-c(Spectrum, long, `sl ratio`, melEDI, illuminance)) |>
   add_photoperiod(coordinates) |> 
   group_by(photoperiod.state, .add = TRUE) |> 
   summarize_numeric(prefix = "", 
                     remove = c("dawn", "dusk", "photoperiod", "Datetime")) |> 
   group_by(Id, photoperiod.state) |> 
-  # mean_daily(prefix = "") |> 
   select(-episodes) |> 
   pivot_wider(names_from =photoperiod.state, values_from = short) |> 
-  gt() |> fmt_number(scale_by = 1000, decimals = 1)
+  gt() |> 
+  fmt_number(scale_by = 1000, decimals = 1)
 ```
 
 ::: {.callout-note}
 
-In the above, `add_photoperiod(coordinates)` is used as a convenient way to add columns to the data frame, indicating for each timestamp whether it was day or night, given the latitude/longitude.
+In the code cell above, `add_photoperiod(coordinates)` is used as a convenient way to add columns to the data frame, indicating for each timestamp whether it was day or night, given the latitude/longitude.
 
 :::
 
@@ -763,7 +1044,9 @@ In the above, `add_photoperiod(coordinates)` is used as a convenient way to add 
 
 ## Discussion and conclusion
 
-This tutorial demonstrates a standardized, step-by-step pipeline to calculate a variety of visual experience metrics. We illustrated how a combination of LightLogR functions and tidyverse workflows can yield clear and reproducible analyses for wearable device data. While the full pipeline is detailed, each metric is computed through a dedicated sequence of well-documented steps. By leveraging LightLogR’s framework alongside common data analysis approaches, the process remains transparent and relatively easy to follow. The overall goal is to make analysis transparent (with open-source functions), accessible (through thorough documentation, tutorials, and human-readable function naming, all under an MIT license), robust (the package includes ~900 unit tests and continuous integration with bug tracking on GitHub), and community-driven (open feature requests and contributions via GitHub).
+This tutorial demonstrates a standardized, step-by-step pipeline to calculate a variety of visual experience metrics. We illustrated how a combination of LightLogR functions and tidyverse workflows can yield clear and reproducible analyses for wearable device data. While the full pipeline is detailed, each metric is computed through a dedicated sequence of well-documented steps, yet remains configurable to realize different metric definitions or thresholds. 
+
+By leveraging LightLogR’s framework alongside common data analysis approaches, the process remains transparent and relatively easy to follow. The overall goal is to make analysis transparent (with open-source functions), accessible (through thorough documentation, tutorials, and human-readable function naming, all under an MIT license), robust (the package includes >900 unit tests and continuous integration with bug tracking on GitHub), and community-driven (open feature requests and contributions via GitHub).
 
 Even with standardized pipelines, researchers must still make and document many decisions during data cleaning, time-series handling, and metric calculations — especially for complex metrics that involve grouping data in multiple ways (for example, grouping by distance range as well as by duration for cluster metrics). We have highlighted these decision points in the tutorial (such as how to handle irregular intervals, choosing thresholds for “near” distances or “outdoor” light, and deciding on minimum durations for sustained events). Explicitly considering and reporting these choices is important for reproducibility and for comparing results across studies.
 
@@ -779,7 +1062,7 @@ sessionInfo()
 
 ### Data availability statement
 
-All data and code in this tutorial and Supplement 1 are available from the GitHub repository: https://github.com/tscnlab/ZaunerEtAl_JVis_2025/, archived on Zenodo: https://doi.org/10.5281/zenodo.16566014 under a MIT license (data under CC-BY license).
+All data and code in this tutorial and Supplement 1 are available from the GitHub repository: https://github.com/tscnlab/ZaunerEtAl_JVis_2026/, archived on Zenodo: https://doi.org/10.5281/zenodo.16566014 under a MIT license (data under CC-BY license).
 
 ### Funding statement
 

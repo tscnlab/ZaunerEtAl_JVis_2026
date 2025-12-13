@@ -9,10 +9,10 @@ manuscript:
     - data/VEET_calibration_matrix.csv
 
 website:
-  title: "LightLogR tutorial on visual experience (VE) data"
-  site-url: https://tscnlab.github.io/ZaunerEtAl_JVis_2025/
-  repo-url: https://github.com/tscnlab/ZaunerEtAl_JVis_2025
-  issue-url: https://github.com/tscnlab/ZaunerEtAl_JVis_2025/issues
+  title: "Analysis of human visual experience data"
+  site-url: https://tscnlab.github.io/ZaunerEtAl_JVis_2026/
+  repo-url: https://github.com/tscnlab/ZaunerEtAl_JVis_2026
+  issue-url: https://github.com/tscnlab/ZaunerEtAl_JVis_2026/issues
   repo-actions: [edit, issue]
   page-navigation: true
   bread-crumbs: true
@@ -24,7 +24,7 @@ website:
         text: Supplement
     right:
       - icon: github
-        href: https://github.com/tscnlab/ZaunerEtAl_JVis_2025
+        href: https://github.com/tscnlab/ZaunerEtAl_JVis_2026
         aria-label: Quarto GitHub
 
 
@@ -39,6 +39,8 @@ format:
     # comments:
     #   hypothesis: true
     format:
+    code-link: true
+    code-line-numbers: true
     toc-location: left
     toc-depth: 3
     toc-expand: 2
