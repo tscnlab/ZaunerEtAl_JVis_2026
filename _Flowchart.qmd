@@ -98,55 +98,78 @@ TOF_NONWEAR -- Cleaned VEET distance dataset **dataVEET3** --> SAVE
 ```
 
 ```{mermaid}
+%%| fig-cap: "Analysis steps in main text"
 flowchart TD
 
 %% ===== Clean inputs =====
-CC[dataCC cleaned Clouclip]
-ALS[dataVEET cleaned ALS light]
-SPEC[dataVEET2 cleaned spectra]
-TOF[dataVEET3 cleaned distance]
+CC[(dataCC: Clouclip distance & light)]
+ALS[(dataVEET: ALS illuminance)]
+SPEC[(dataVEET2: reconstructed spectra)]
+TOF[(dataVEET3: TOF distance grid)]
 
-%% ===== Distance analysis =====
-DIST_WEAR[Wear time and distance range durations]
-DIST_EP[Near work episodes and continuity]
-DIST_BREAKS[Visual breaks metrics]
+classDef input fill:#f7f7f7,stroke:#2f3d4a,color:#0f1a22,stroke-width:1px;
+classDef process fill:#ffffff,stroke:#2f3d4a,color:#0f1a22,stroke-width:1px;
+classDef output fill:#eef2f7,stroke:#2f3d4a,color:#0f1a22,stroke-width:1px;
 
-CC --> DIST_WEAR
-TOF --> DIST_WEAR
-CC --> DIST_EP
-TOF --> DIST_EP
-CC --> DIST_BREAKS
-TOF --> DIST_BREAKS
+class CC,ALS,SPEC,TOF input;
 
-%% ===== Light exposure analysis =====
-LIGHT_MEAN[Mean daily illuminance]
-LIGHT_THRESH[Durations above Lux thresholds]
-LIGHT_TRANS[Indoor outdoor transitions]
-LIGHT_LONG[Longest and total bright periods]
+%% ===== Working distance =====
+subgraph DIST[**Working distance metrics**]
+  D_ALIGN[Align to 5 s grid,<br/>mask non-wear]:::process
+  D_RANGE[Durations within distance bands<br/>(near, intermediate, far)]:::process
+  D_EP[Continuous near-work episodes<br/>and wear coverage]:::process
+  D_BREAKS[Visual breaks from near work<br/>(frequency & % time)]:::process
+  D_SPATIAL[Spatial distribution from TOF grid<br/>(angles & positions)]:::process
+end
 
-CC --> LIGHT_MEAN
-ALS --> LIGHT_MEAN
-CC --> LIGHT_THRESH
-ALS --> LIGHT_THRESH
-CC --> LIGHT_TRANS
-ALS --> LIGHT_TRANS
-CC --> LIGHT_LONG
-ALS --> LIGHT_LONG
+CC --> D_ALIGN
+TOF --> D_ALIGN
+D_ALIGN --> D_RANGE
+D_RANGE --> D_EP
+D_EP --> D_BREAKS
+TOF --> D_SPATIAL
 
-%% ===== Spectral analysis =====
-SPEC_RATIO[Short vs long wavelength ratios]
-SPEC_MDER[Melanopic daylight efficacy ratio]
-SPEC_TOD[Short wavelength exposure by time of day]
+%% ===== Illuminance exposure =====
+subgraph LIGHT[**Illuminance exposure**]
+  L_ALIGN[Aggregate to 5 s,<br/>contextualize photoperiod]:::process
+  L_MEAN[Average daily illuminance<br/>by weekdays/weekends]:::process
+  L_THRESH[Durations above lux thresholds<br/>(outdoor vs indoor)]:::process
+  L_TRANS[Indoor→outdoor transition counts<br/>and timings]:::process
+  L_BRIGHT[Longest & cumulative bright-light<br/>periods across days]:::process
+end
 
-SPEC --> SPEC_RATIO
-SPEC --> SPEC_MDER
-SPEC --> SPEC_TOD
+CC --> L_ALIGN
+ALS --> L_ALIGN
+L_ALIGN --> L_MEAN
+L_ALIGN --> L_THRESH
+L_ALIGN --> L_TRANS
+L_ALIGN --> L_BRIGHT
 
-%% ===== Optional combined analysis =====
-MERGE[Optional merge of devices with join_datasets]
+%% ===== Spectral metrics =====
+subgraph SPECAN[**Spectral characteristics**]
+  S_PREP[5 min aggregation & gain-normalized spectra]:::process
+  S_RATIO[Short- vs long-wavelength ratios]:::process
+  S_MDER[Melanopic daylight efficacy ratio]:::process
+  S_TOD[Short-wavelength exposure<br/>by morning/hourly profile/photoperiod]:::process
+end
 
-CC --> MERGE
-ALS --> MERGE
-SPEC --> MERGE
-TOF --> MERGE
+SPEC --> S_PREP
+S_PREP --> S_RATIO
+S_PREP --> S_MDER
+S_PREP --> S_TOD
+
+%% ===== Integration & reporting =====
+subgraph REPORT[**Integration and reporting**]
+  MERGE[Optional merge across modalities<br/>(join_datasets)]:::process
+  TABLES[Summary tables for manuscript]:::output
+  FIGS[Plots of distance, light, spectrum metrics]:::output
+end
+
+D_BREAKS --> MERGE
+D_SPATIAL --> MERGE
+L_BRIGHT --> MERGE
+S_TOD --> MERGE
+MERGE --> TABLES
+MERGE --> FIGS
+class MERGE process
 ```
