@@ -1,0 +1,152 @@
+---
+title: "Flowchart"
+editor: visual
+mermaid-format: png
+---
+
+```{mermaid}
+%%| fig-width: 9
+%%| fig-cap: "Pre-processing in supplement"
+%%| label: fig-fc_supplement
+
+flowchart TD
+
+%% ===== Raw inputs =====
+RAW_CC[(Raw Clouclip file)]
+RAW_VEET[(Raw VEET file)]
+
+%% ===== Clouclip preprocessing =====
+CC_IMP[Import 
+Clouclip data]
+CC_QC[Inspect data, 
+check for gaps and 
+irregular data]
+CC_REG[Regularize timestamps and handle gaps]
+CC_VIS[Visualize cleaned 
+Clouclip data]
+
+RAW_CC --> Clouclip
+subgraph Clouclip[**Light and distance**]
+CC_IMP --> CC_QC
+CC_QC --> CC_REG
+CC_REG --> CC_VIS
+end
+
+%% ===== VEET ALS light preprocessing =====
+ALS_IMP[Import VEET 
+*ALS* 
+light modality]
+ALS_QC[Inspect, adjust interval, handle gaps, remove high missing days]
+IMU_IMP[Import VEET *IMU* actigraphy modality]
+IMU_NONWEAR[Detect **non-wear** using activity rules]
+ALS_NONWEAR[Add, label and visualize 
+**non-wear**]
+ALS_CLEAN[Remove **non-wear** observations]
+
+RAW_VEET --> ALS_IMP
+RAW_VEET --> IMU_IMP
+subgraph Light[**Ambient light**]
+ALS_IMP --> ALS_QC
+ALS_QC --> ALS_NONWEAR
+IMU_IMP --> IMU_NONWEAR
+IMU_NONWEAR --> ALS_NONWEAR
+ALS_NONWEAR --> ALS_CLEAN
+end
+
+%% ===== VEET spectral preprocessing =====
+SPEC_IMP[Import VEET 
+*PHO* 
+spectral channels]
+SPEC_NORM[Normalize spectral channels by gain and integration time]
+SPEC_CLEAN[Inspect, adjust interval, handle gaps, remove high missing days]
+SPEC_CALfile[(Calibration matrix)]
+SPEC_CAL[Import calibration matrix]
+SPEC_RECON[Reconstruct and visualize spectra, 
+calculate illuminance]
+
+RAW_VEET --> SPEC_IMP
+subgraph Spectrum[**Spectral data**]
+SPEC_IMP --> SPEC_NORM
+SPEC_NORM --> SPEC_CLEAN
+SPEC_CLEAN --> SPEC_RECON
+SPEC_CALfile --> SPEC_CAL
+SPEC_CAL --> SPEC_RECON
+end
+
+%% ===== VEET distance preprocessing =====
+TOF_IMP[Import VEET distance 
+*TOF* 
+modality]
+TOF_QC[Inspect, adjust interval, handle gaps, remove high missing days]
+TOF_PIV[Pivot from *wide* to *long* format and label spatial position]
+TOF_NONWEAR[Add, label and remove **non-wear**]
+
+IMU_NONWEAR -.-> TOF_NONWEAR
+RAW_VEET --> Distance
+subgraph Distance[**Spatial distance**]
+TOF_IMP --> TOF_QC
+TOF_QC --> TOF_PIV
+TOF_PIV --> TOF_NONWEAR
+end
+%% ===== Save outputs =====
+SAVE[(Save cleaned datasets)]
+
+CC_VIS -- Cleaned Clouclip dataset **dataCC** --> SAVE
+ALS_CLEAN -- Cleaned VEET ALS dataset **dataVEET** --> SAVE
+SPEC_RECON -- Cleaned VEET spectral dataset **dataVEET2** --> SAVE
+TOF_NONWEAR -- Cleaned VEET distance dataset **dataVEET3** --> SAVE
+```
+
+```{mermaid}
+flowchart TD
+
+%% ===== Clean inputs =====
+CC[dataCC cleaned Clouclip]
+ALS[dataVEET cleaned ALS light]
+SPEC[dataVEET2 cleaned spectra]
+TOF[dataVEET3 cleaned distance]
+
+%% ===== Distance analysis =====
+DIST_WEAR[Wear time and distance range durations]
+DIST_EP[Near work episodes and continuity]
+DIST_BREAKS[Visual breaks metrics]
+
+CC --> DIST_WEAR
+TOF --> DIST_WEAR
+CC --> DIST_EP
+TOF --> DIST_EP
+CC --> DIST_BREAKS
+TOF --> DIST_BREAKS
+
+%% ===== Light exposure analysis =====
+LIGHT_MEAN[Mean daily illuminance]
+LIGHT_THRESH[Durations above Lux thresholds]
+LIGHT_TRANS[Indoor outdoor transitions]
+LIGHT_LONG[Longest and total bright periods]
+
+CC --> LIGHT_MEAN
+ALS --> LIGHT_MEAN
+CC --> LIGHT_THRESH
+ALS --> LIGHT_THRESH
+CC --> LIGHT_TRANS
+ALS --> LIGHT_TRANS
+CC --> LIGHT_LONG
+ALS --> LIGHT_LONG
+
+%% ===== Spectral analysis =====
+SPEC_RATIO[Short vs long wavelength ratios]
+SPEC_MDER[Melanopic daylight efficacy ratio]
+SPEC_TOD[Short wavelength exposure by time of day]
+
+SPEC --> SPEC_RATIO
+SPEC --> SPEC_MDER
+SPEC --> SPEC_TOD
+
+%% ===== Optional combined analysis =====
+MERGE[Optional merge of devices with join_datasets]
+
+CC --> MERGE
+ALS --> MERGE
+SPEC --> MERGE
+TOF --> MERGE
+```

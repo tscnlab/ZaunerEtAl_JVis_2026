@@ -125,7 +125,9 @@ Data from two wearable devices are used in this analysis:
 
 ### Data processing summary
 
-The [Results](#results) section uses imported and pre-processed data from the two devices to calculate metrics. [Supplement 1](supplement.qmd) contains the annotated code and description for the steps involved. The following summarizes the steps involved, please refer to the supplement for details:
+The [Results](#results) section uses imported and pre-processed data from the two devices to calculate metrics. [Supplement 1](supplement.qmd) contains the annotated code and description for the steps involved, which are summarized as follows, and as is shown in @fig-fc_supplement. Please refer to the supplement for details.
+
+![Pre-processing steps in the [supplement document](supplement.qmd)](assets/Flowchart_supplement.png){#fig-fc_supplement}
 
 **Data import:** We imported raw data from the `Clouclip` and `VEET` devices using LightLogR’s built-in import functions, which automatically handle device-specific formats and idiosyncrasies. 
 
