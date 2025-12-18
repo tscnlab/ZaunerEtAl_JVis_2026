@@ -260,7 +260,7 @@ In the `VEET`’s export file, each line includes a timestamp and a modality cod
 
 ![Screenshot of the first rows of the `VEET` export file format as seen in a text editor](assets/VEET_fileformat.png){#fig-VEET_file}
 
-For the **PHO (spectral) modality**, the columns include a timestamp, integration time, a general `Gain` factor, and nine sensor channel readings covering different wavelengths (with names like `s415, s445, ..., s680, s940`) as well as a `Dark` channel and a broadband channel `Clear`. In essence, the `VEET`’s spectral sensor captures light in several wavelength bands (from \~415 nm up to 940 nm, plus an infrared and “clear” channel) rather than outputting a single lux value like the ambient light sensor does (*PHO*).
+For the **PHO (spectral) modality**, the columns include a timestamp, integration time, a general `Gain` factor, and nine sensor channel readings covering different wavelengths (with names like `s415, s445, ..., s680, s940`) as well as a `Dark` channel, a broadband channel `Clear`, and another broadband channel for flicker detection (`FD`). In essence, the `VEET`’s spectral sensor captures light in several wavelength bands (from \~415 nm up to 940 nm) rather than outputting a single lux value like the ambient light sensor does (*PHO*).
 
 To import the `VEET` ambient light data, we again use the LightLogR import function, specifying the `ALS` modality. The raw VEET data in our example is provided as a zip file (`01_VEET_L.csv.zip`) containing the logged data for one week. We do the following:
 
@@ -323,19 +323,27 @@ At this point, the `dataVEET` object (for illuminance) is cleaned and ready fo
 
 ### Identifying non-wear times
 
-Not all recorded time points of the `VEET` can be considered as `wear time`. `Non-wear` times should generally be removed from time series, if possible. There are several ways how `Non-wear` can be classified [@Zauner2025npj]:
+Not all recorded time points of the `VEET` can be considered as `wear time`. `Non-wear` times should generally be labelled in the wearable time series, if possible. There are several ways how `Non-wear` can be classified [@Zauner2025npj]:
 
-1. A device detects `non-wear` and does not record any measurements during non-wear times, or has a variable in the exported data to denote non-wear times. The `Clouclip` is an example here with the `sleep mode` sentinel state
+1. A device detects `non-wear` and does not record any measurements during non-wear times, or has a variable in the exported data to denote non-wear times. The `Clouclip` is an example here with the `sleep mode` sentinel state.
 
-2. Record non-wear separately, e.g. with a wear-log or diary. This is easy to implement, but puts a higher burden on participants and research staff, and can be error prone: forgotten, or incorrect data entries can mis-classify wear and non-wear times. For an implementation on how to remove non-wear times based on such a log, see, e.g., this [tutorial](https://tscnlab.github.io/LightLogR_webinar/advanced_01_a_day_in_daylight-live.html).
+2. Record non-wear separately, e.g. with a wear-log or diary. This is easy to implement, but puts a higher burden on participants and research staff, and can be error prone: forgotten, or incorrect data entries can mis-classify wear and non-wear times. For an implementation on how to remove non-wear times based on such a log, see, e.g., this [tutorial](https://tscnlab.github.io/LightLogR_webinar/advanced_01_a_day_in_daylight-live.html). These information can also be derived from contextual information. For example, the `VEET` records charging times in a separate file `log.csv`, which can be considered as definitive non-wear times.
 
 3. Instruct participants with a certain behavior when removing the device to ease automated detection of non-wear times in the data. These include putting a device in a black opaque bag, so that sensor readings for light are zero, or pressing an event button (if one exists). Up- and downsides are similar to the previous option, but the measures are usually harder to decipher in the data: when a buttonpress was forgotten, does that mess up the automated detection moving forward, which expects two presses per non-wear period (at beginning and at start). When there is zero lux during the day - was it in a black bag, or was this person just in a dark environment?
 
 4. Automated detection by an algorithm. There are several possibilities to try to classify non-wear times based on the available data from a wearable. E.g., if there is an activity tracker, that can be used to determine periods of inactivity, which could indicate non-wear. If only light data is available, the standard deviation (or coefficient of variance) of light in a moving window of a few minutes can be used to determine low variance, which also indicates inactivity. Usually a histogram of values shows a spike in those periods of inactivity.
 
+::: {.callout-note}
+
+#### How to handle non-wear intervals
+
+Whether classified non-wear intervals should be removed, i.e., observations set to `NA`, or not should be a deliberate decision by the researcher. If it can be assumed that non-wear times misrepresent the measurement environment of the participant, then these observations are best set to `NA`. If, on the other hand, they might be somewhat representative, then it might be enough to label these times but still include them in analyses. Usually, this requires special instructions to the participants for non-wear. E.g., instructions for bed-time could include setting the device on the night stand facing into the room (i.e., sensors not obstructed). While this would not represent distance well, it can be considered as sufficient for ambient light measurements. 
+
 If datasets are large enough, i.e., collect data from a long enought period, `non-wear` has a diminishing effect, at least as daily metrics of light are concerned. E.g., in a monthlong study of 39 participants from Switzerland and Malaysia, [@Biller2025] found that based on a sensitivity anaylsis up to 6 hours of data could be missing **every day**, and still the daily metrics across that month would not significantly change. This assumption only holds when non-wear times are not systematic, i.e., at the same time each day.
 
-We will perform a simple variant of the third option, and look at the `VEET`'s `IMU` modality
+:::
+
+We will perform a simple variant of the third option, and look at the `VEET`'s `IMU` modality.
 
 ```{r}
 #| fig-height: 2
