@@ -11,19 +11,23 @@ mermaid-format: png
 
 flowchart TD
 
+classDef input fill:#f7f7f7,stroke:#2f3d4a,color:#0f1a22,stroke-width:1px;
+classDef process fill:#ffffff,stroke:#2f3d4a,color:#0f1a22,stroke-width:1px;
+classDef output fill:#eef2f7,stroke:#2f3d4a,color:#0f1a22,stroke-width:1px;
+
 %% ===== Raw inputs =====
-RAW_CC[(Raw Clouclip file)]
-RAW_VEET[(Raw VEET file)]
+RAW_CC[(Raw Clouclip file)]:::input
+RAW_VEET[(Raw VEET file)]:::input
 
 %% ===== Clouclip preprocessing =====
 CC_IMP[Import 
-Clouclip data]
+Clouclip data]:::process
 CC_QC[Inspect data, 
 check for gaps and 
-irregular data]
-CC_REG[Regularize timestamps and handle gaps]
+irregular data]:::process
+CC_REG[Regularize timestamps and handle gaps]:::process
 CC_VIS[Visualize cleaned 
-Clouclip data]
+Clouclip data]:::process
 
 RAW_CC --> Clouclip
 subgraph Clouclip[**Light and distance**]
@@ -35,13 +39,13 @@ end
 %% ===== VEET ALS light preprocessing =====
 ALS_IMP[Import VEET 
 *ALS* 
-light modality]
-ALS_QC[Inspect, adjust interval, handle gaps, remove high missing days]
-IMU_IMP[Import VEET *IMU* actigraphy modality]
-IMU_NONWEAR[Detect **non-wear** using activity rules]
+light modality]:::process
+ALS_QC[Inspect, adjust interval, handle gaps, remove high missing days]:::process
+IMU_IMP[Import VEET *IMU* actigraphy modality]:::process
+IMU_NONWEAR[Detect **non-wear** using activity rules]:::process
 ALS_NONWEAR[Add, label and visualize 
-**non-wear**]
-ALS_CLEAN[Remove **non-wear** observations]
+**non-wear**]:::process
+ALS_CLEAN[Remove **non-wear** observations]:::process
 
 RAW_VEET --> ALS_IMP
 RAW_VEET --> IMU_IMP
@@ -56,13 +60,13 @@ end
 %% ===== VEET spectral preprocessing =====
 SPEC_IMP[Import VEET 
 *PHO* 
-spectral channels]
-SPEC_NORM[Normalize spectral channels by gain and integration time]
-SPEC_CLEAN[Inspect, adjust interval, handle gaps, remove high missing days]
-SPEC_CALfile[(Calibration matrix)]
-SPEC_CAL[Import calibration matrix]
+spectral channels]:::process
+SPEC_NORM[Normalize spectral channels by gain and integration time]:::process
+SPEC_CLEAN[Inspect, adjust interval, handle gaps, remove high missing days]:::process
+SPEC_CALfile[(Calibration matrix)]:::input
+SPEC_CAL[Import calibration matrix]:::process
 SPEC_RECON[Reconstruct and visualize spectra, 
-calculate illuminance]
+calculate illuminance]:::process
 
 RAW_VEET --> SPEC_IMP
 subgraph Spectrum[**Spectral data**]
@@ -76,10 +80,10 @@ end
 %% ===== VEET distance preprocessing =====
 TOF_IMP[Import VEET distance 
 *TOF* 
-modality]
-TOF_QC[Inspect, adjust interval, handle gaps, remove high missing days]
-TOF_PIV[Pivot from *wide* to *long* format and label spatial position]
-TOF_NONWEAR[Add, label and remove **non-wear**]
+modality]:::process
+TOF_QC[Inspect, adjust interval, handle gaps, remove high missing days]:::process
+TOF_PIV[Pivot from *wide* to *long* format and label spatial position]:::process
+TOF_NONWEAR[Add, label and remove **non-wear**]:::process
 
 IMU_NONWEAR -.-> TOF_NONWEAR
 RAW_VEET --> Distance
@@ -89,12 +93,14 @@ TOF_QC --> TOF_PIV
 TOF_PIV --> TOF_NONWEAR
 end
 %% ===== Save outputs =====
-SAVE[(Save cleaned datasets)]
+SAVE[(Save cleaned datasets)]:::input
 
 CC_VIS -- Cleaned Clouclip dataset **dataCC** --> SAVE
 ALS_CLEAN -- Cleaned VEET ALS dataset **dataVEET** --> SAVE
 SPEC_RECON -- Cleaned VEET spectral dataset **dataVEET2** --> SAVE
 TOF_NONWEAR -- Cleaned VEET distance dataset **dataVEET3** --> SAVE
+
+class Clouclip,Distance,Spectrum,Light output;
 ```
 
 ```{mermaid}
@@ -116,10 +122,10 @@ class CC,ALS,SPEC,TOF input;
 %% ===== Working distance =====
 subgraph DIST[**Working distance metrics**]
   D_ALIGN[Align to 5 s grid,<br/>mask non-wear]:::process
-  D_RANGE[Durations within distance bands<br/>(near, intermediate, far)]:::process
+  D_RANGE[Durations within distance bands<br/>near, intermediate, far]:::process
   D_EP[Continuous near-work episodes<br/>and wear coverage]:::process
-  D_BREAKS[Visual breaks from near work<br/>(frequency & % time)]:::process
-  D_SPATIAL[Spatial distribution from TOF grid<br/>(angles & positions)]:::process
+  D_BREAKS[Visual breaks from near work<br/>frequency & % time]:::process
+  D_SPATIAL[Spatial distribution from TOF grid<br/>angles & positions]:::process
 end
 
 CC --> D_ALIGN
@@ -133,7 +139,7 @@ TOF --> D_SPATIAL
 subgraph LIGHT[**Illuminance exposure**]
   L_ALIGN[Aggregate to 5 s,<br/>contextualize photoperiod]:::process
   L_MEAN[Average daily illuminance<br/>by weekdays/weekends]:::process
-  L_THRESH[Durations above lux thresholds<br/>(outdoor vs indoor)]:::process
+  L_THRESH[Durations above lux thresholds<br/>outdoor vs indoor]:::process
   L_TRANS[Indoor→outdoor transition counts<br/>and timings]:::process
   L_BRIGHT[Longest & cumulative bright-light<br/>periods across days]:::process
 end
@@ -160,7 +166,7 @@ S_PREP --> S_TOD
 
 %% ===== Integration & reporting =====
 subgraph REPORT[**Integration and reporting**]
-  MERGE[Optional merge across modalities<br/>(join_datasets)]:::process
+  MERGE[Optional merge across modalities<br/>join_datasets]:::process
   TABLES[Summary tables for manuscript]:::output
   FIGS[Plots of distance, light, spectrum metrics]:::output
 end
@@ -173,3 +179,12 @@ MERGE --> TABLES
 MERGE --> FIGS
 class MERGE process
 ```
+
+
+
+
+
+
+
+
+
