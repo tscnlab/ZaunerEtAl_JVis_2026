@@ -1,0 +1,96 @@
+```{mermaid}
+%%| fig-width: 9
+%%| fig-cap: "Workflows that are covered in the results section. The pre-processed datasets are covered in detail in the [supplement](supplement.qmd)"
+%%| label: fig-fc_main
+%%| echo: true
+%%| code-fold: true
+%%{init: {"flowchart": {"diagramPadding": 50}}}%%
+
+flowchart TD
+
+classDef input fill:#f7f7f7,stroke:#2f3d4a,color:#0f1a22,stroke-width:1px;
+classDef process fill:#ffffff,stroke:#2f3d4a,color:#0f1a22,stroke-width:1px;
+classDef output fill:#eef2f7,stroke:#2f3d4a,color:#0f1a22,stroke-width:1px;
+
+%% =========================
+  %% MANUSCRIPT (ANALYSIS / METRICS)
+  %% =========================
+    FILE[(Pre-processed datasets)]:::input
+
+    %% Distance branch
+    subgraph MS_DIST["**Distance**"]
+      direction LR
+      Clouclip[Clouclip data<br/>*dataCC*]:::input
+      M_WEAR["Total wear time: daily duration"]:::process
+      M_Near["Near work: daily duration"]:::process
+      M_RANGES["Binned ranges: daily duration"]:::process
+      M_CONTNW["Continuous near work:<br/>daily frequency + plot"]:::process
+      M_NEARW["Near work episodes:<br/>frequency, duration, distance"]:::process
+      M_BREAKS["Visual breaks: frequency"]:::process
+      Distance[VEET<br/>spatial distance<br/>*dataVEET3*]:::input
+      M_GRID["Plot example distance grids"]:::process
+      M_CONDENSE["Condense grid"]:::process
+    end
+    
+  FILE --> MS_DIST
+  Clouclip --> M_WEAR 
+  Clouclip --> M_Near
+  Clouclip --> M_RANGES 
+  Clouclip --> M_CONTNW 
+  Clouclip --> M_NEARW
+  Clouclip --> M_BREAKS
+  Distance --> M_GRID
+  Distance --> M_CONDENSE
+
+%% Light branch (VEET ALS)
+    subgraph MS_LIGHT["**Light**"]
+      direction LR
+      VEET_light["VEET<br/>light data<br/>*dataVEET*"]:::input
+      M_HIST["Distribution plots<br/>of light exposure<br/>for Clouclip and VEET"]:::process
+      M_MEAN_LUX["Illuminance:<br/>daily average with and<br/>without logarithmic<br/>adjustment"]:::process
+      M_OUTDOOR["Outdoor conditions:<br/>daily duration"]:::process
+      M_TRANS["Indoor to outdoor<br/>transitions:<br/>frequency"]:::process
+      M_PAT_TAT["Longest period and<br/>total time above threshold"]:::process
+      M_MERGE["Merge device data,<br/>recalculate daily average<br/>with both datasets at once"]:::process
+      Clouclip2[Clouclip data<br/>*dataCC*]:::input
+    end
+    
+  FILE --> MS_LIGHT
+  VEET_light --> M_HIST
+  VEET_light --> M_MEAN_LUX
+  VEET_light --> M_OUTDOOR
+  VEET_light --> M_TRANS
+  VEET_light --> M_PAT_TAT
+  VEET_light --> M_MERGE
+  Clouclip2 --> M_MERGE
+
+%% Spectrum branch (VEET PHO)
+    subgraph MS_SPEC["**Spectrum**"]
+      direction LR
+      VEET_spectrum["VEET<br/>spectral data<br/>*dataVEET2*"]:::input
+      M_SHORTLONG["Integrate spectrum across<br/>wavelength bands and<br/>calculate short/long<br/>wavelength ratio"]:::process
+      M_MDER["Compute illuminance and<br/>melanopic EDI<br/>from spectrum"]:::process
+      M_MDER2["Calculate the melanopic<br/>daylight efficacy ratio<br/>*MDER*)"]:::process
+      M_DIURNAL["Calculate morning<br/>blue light exposure"]:::process
+      M_HOURLY["Plot relative hourly<br/>blue light exposure"]:::process
+      M_PHOTOPER["Calculate day vs night<br/>comparison of<br/>blue light exposure"]:::process
+    end
+
+ FILE --> MS_SPEC
+ VEET_spectrum --> M_SHORTLONG
+ VEET_spectrum --> M_MDER
+ M_MDER --> VEET_spectrum
+ VEET_spectrum --> M_MDER2
+ VEET_spectrum --> M_DIURNAL
+ VEET_spectrum --> M_HOURLY
+ VEET_spectrum --> M_PHOTOPER
+ 
+ class MS_DIST,MS_LIGHT,MS_SPEC output;
+
+```
+
+
+
+
+
+

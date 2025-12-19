@@ -125,9 +125,9 @@ Data from two wearable devices are used in this analysis:
 
 ### Data processing summary
 
-The [Results](#results) section uses imported and pre-processed data from the two devices to calculate metrics. [Supplement 1](supplement.qmd) contains the annotated code and description for the steps involved, which are summarized as follows, and as is shown in @fig-fc_supplement. Please refer to the supplement for details.
+The [Results](#results) section uses imported and pre-processed data from the two devices to calculate metrics. [Supplement 1](supplement.qmd) contains the annotated code and description for the steps involved, which are summarized as follows, and as shown in @fig-fc_supplement. Please refer to the supplement for details.
 
-![Pre-processing steps in the [supplement document](supplement.qmd)](assets/Flowchart_supplement.png){#fig-fc_supplement}
+{{< include _flowchart_supplement.qmd >}}
 
 **Data import:** We imported raw data from the `Clouclip` and `VEET` devices using LightLogR’s built-in import functions, which automatically handle device-specific formats and idiosyncrasies. 
 
@@ -179,6 +179,10 @@ coordinates <- c(29.75, -95.36) #<1>
 1. Coordinates for Houston, Texas; coordinates are important to calculate and visualize photoperiods later
 
 ## Results {#results}
+
+@fig-fc_main shows an overview of the covered workflows in the results section.
+
+{{< include _flowchart_main.qmd >}}
 
 ### Distance
 
@@ -310,7 +314,7 @@ dataCC |>
   theme_minimal() +
   labs(y = "Relative duration (%)", x = NULL, fill = NULL) +
   coord_flip()
-ggsave("manuscript/figures/Figure1.png",
+ggsave("manuscript/figures/Figure3.png",
                 width = 7,
                 height = 5)
 ```
@@ -379,7 +383,7 @@ dataCC |> # <1>
 ```{r}
 #| echo: false
 #| output: false
-ggsave("manuscript/figures/Figure2.png",
+ggsave("manuscript/figures/Figure4.png",
                 width = 9,
                 height = 9)
 ```
@@ -425,7 +429,7 @@ dataCC |>
 
 #### Visual breaks
 
-`Visual breaks` as defined in this article, require a minimum break-length, and the previous episode is important. This leads to a two step process, where we first extract instances of `Distance` above 100 cm for at least 20 seconds, before we filter for a previous duration of at maximum 20 minutes. @tbl-visualbreaks provides the daily frequency of visual breaks.
+`Visual breaks` as defined in this article, require a minimum break-length, and the previous episode is important. This leads to a two step process, where we first extract instances of `Distance` above 100 cm for at least 20 seconds, before we filter for a previous duration of at maximum 20 minutes. @tbl-visualbreaks provides the daily frequency of visual breaks and @fig-cluster shows when these occu.
 
 ```{r}
 #| label: tbl-visualbreaks
@@ -481,14 +485,14 @@ dataCC |> # <1>
 ```{r}
 #| echo: false
 #| output: false
-ggsave("manuscript/figures/Figure3.png",
+ggsave("manuscript/figures/Figure5.png",
                 width = 9,
                 height = 9)
 ```
 
 #### Distance with spatial distribution
 
-The `Clouclip` device outputs a singular measure for distance, while the visual environment in natural conditions contains many distances, depending on the solid angle and direction of the measurement. A device like the `VEET` increases the spatial resolution of these measurements, allowing for more in-depth analyses of the size and position of an object within the field of view. In the case of the `VEET`, data are collected from an 8x8 measurement grid, spanning 52° vertically and 41° horizontally. Here are sample observations from six different days at the same time.
+The `Clouclip` device outputs a singular measure for distance, while the visual environment in natural conditions contains many distances, depending on the solid angle and direction of the measurement. A device like the `VEET` increases the spatial resolution of these measurements, allowing for more in-depth analyses of the size and position of an object within the field of view. In the case of the `VEET`, data are collected from an 8x8 measurement grid, spanning 52° vertically and 41° horizontally. @fig-VEET-distance shows sample observations from six different days at the same time.
 
 ```{r}
 #| filename: Collect plot partials to plot the spatial distance grids
@@ -531,7 +535,7 @@ dataVEET3 |>
 ```{r}
 #| echo: false
 #| output: false
-ggsave("manuscript/figures/Figure4.png",
+ggsave("manuscript/figures/Figure6.png",
                 width = 8,
                 height = 6)
 ```
@@ -610,7 +614,7 @@ dataVEET3_condensed |>
 ```{r}
 #| echo: false
 #| output: false
-ggsave("manuscript/figures/Figure5.png",
+ggsave("manuscript/figures/Figure7.png",
                 width = 7,
                 height = 4)
 ```
@@ -637,7 +641,7 @@ dataCC |>
   scale_x_continuous(trans = "symlog", breaks = c(0, 1, 10, 100, 1000, 10000)) +
   scale_y_continuous(labels = ~vec_fmt_percent(.x, decimals = 0)) +
   coord_cartesian(xlim = c(0, 5*10^4), ylim = c(0, 1))
-ggsave("manuscript/figures/Figure6.png",
+ggsave("manuscript/figures/Figure8.png",
                 width = 7,
                 height = 4)
 ```
@@ -658,7 +662,7 @@ dataVEET |>
   scale_x_continuous(trans = "symlog", breaks = c(0, 1, 10, 100, 1000, 10000)) +
   scale_y_continuous(labels = ~vec_fmt_percent(.x, decimals = 0)) +
   coord_cartesian(xlim = c(0, 5*10^4), ylim = c(0, 1))
-ggsave("manuscript/figures/Figure7.png",
+ggsave("manuscript/figures/Figure9.png",
                 width = 7,
                 height = 4)
 ```
@@ -770,7 +774,7 @@ dataVEET |>
 ```{r}
 #| echo: false
 #| output: false
-ggsave("manuscript/figures/Figure8.png",
+ggsave("manuscript/figures/Figure10.png",
                 width = 9,
                 height = 7)
 ```
@@ -1013,7 +1017,7 @@ dataVEETtime |> #<4>
 ```{r}
 #| echo: false
 #| output: false
-ggsave("manuscript/figures/Figure9.png",
+ggsave("manuscript/figures/Figure11.png",
                 width = 5,
                 height = 4)
 ```

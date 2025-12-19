@@ -1,0 +1,89 @@
+```{mermaid}
+%%| fig-width: 9
+%%| fig-cap: "Pre-processing steps in the [supplement document](supplement.qmd)"
+%%| label: fig-fc_supplement
+%%| echo: true
+%%| code-fold: true
+%%| code-summary: Code to generate flowchart
+
+flowchart TD
+
+classDef input fill:#f7f7f7,stroke:#2f3d4a,color:#0f1a22,stroke-width:1px;
+classDef process fill:#ffffff,stroke:#2f3d4a,color:#0f1a22,stroke-width:1px;
+classDef output fill:#eef2f7,stroke:#2f3d4a,color:#0f1a22,stroke-width:1px;
+
+%% ===== Raw inputs =====
+RAW_CC[(Raw Clouclip file)]:::input
+RAW_VEET[(Raw VEET file)]:::input
+
+%% ===== Clouclip preprocessing =====
+CC_IMP[Import<br/>Clouclip data]:::process
+CC_QC[Inspect data,<br/>check for gaps and<br/>irregular data]:::process
+CC_REG[Regularize timestamps<br/>and handle gaps]:::process
+CC_VIS[Visualize cleaned<br/>Clouclip data]:::process
+
+RAW_CC --> Clouclip
+subgraph Clouclip[**Light and distance**]
+CC_IMP --> CC_QC
+CC_QC --> CC_REG
+CC_REG --> CC_VIS
+end
+
+%% ===== VEET ALS light preprocessing =====
+ALS_IMP[Import VEET<br/>*ALS*<br/>light modality]:::process
+ALS_QC[Inspect, adjust interval,<br/>handle gaps, remove high<br/>missing days]:::process
+IMU_IMP[Import VEET<br/>*IMU*<br/>actigraphy modality]:::process
+IMU_NONWEAR[Detect **non-wear**<br/>using activity rules]:::process
+ALS_NONWEAR[Add, label and visualize<br/>**non-wear**]:::process
+ALS_CLEAN[Remove **non-wear**<br/>observations]:::process
+
+RAW_VEET --> ALS_IMP
+RAW_VEET --> IMU_IMP
+subgraph Light[**Ambient light**]
+ALS_IMP --> ALS_QC
+ALS_QC --> ALS_NONWEAR
+IMU_IMP --> IMU_NONWEAR
+IMU_NONWEAR --> ALS_NONWEAR
+ALS_NONWEAR --> ALS_CLEAN
+end
+
+%% ===== VEET spectral preprocessing =====
+SPEC_IMP[Import VEET<br/>*PHO*<br/>spectral channels]:::process
+SPEC_NORM[Normalize spectral<br/>channels by gain and<br/>integration time]:::process
+SPEC_CLEAN[Inspect, adjust interval,<br/>handle gaps, remove high<br/>missing days]:::process
+SPEC_CALfile[(Calibration matrix)]:::input
+SPEC_CAL[Import calibration matrix]:::process
+SPEC_RECON[Reconstruct and visualize<br/>spectra,<br/>calculate illuminance]:::process
+
+RAW_VEET --> SPEC_IMP
+subgraph Spectrum[**Spectral data**]
+SPEC_IMP --> SPEC_NORM
+SPEC_NORM --> SPEC_CLEAN
+SPEC_CLEAN --> SPEC_RECON
+SPEC_CALfile --> SPEC_CAL
+SPEC_CAL --> SPEC_RECON
+end
+
+%% ===== VEET distance preprocessing =====
+TOF_IMP[Import VEET distance<br/>*TOF*<br/>modality]:::process
+TOF_QC[Inspect, adjust interval,<br/>handle gaps, remove high<br/>missing days]:::process
+TOF_PIV[Pivot from *wide* to *long*<br/>format and label spatial<br/>position]:::process
+TOF_NONWEAR[Add, label and remove<br/>**non-wear**]:::process
+
+IMU_NONWEAR -.-> TOF_NONWEAR
+RAW_VEET --> Distance
+subgraph Distance[**Spatial distance**]
+TOF_IMP --> TOF_QC
+TOF_QC --> TOF_PIV
+TOF_PIV --> TOF_NONWEAR
+end
+%% ===== Save outputs =====
+SAVE[(Pre-processed datasets)]:::input
+
+CC_VIS -- Cleaned Clouclip dataset **dataCC** --> SAVE
+ALS_CLEAN -- Cleaned VEET ALS dataset **dataVEET** --> SAVE
+SPEC_RECON -- Cleaned VEET spectral dataset **dataVEET2** --> SAVE
+TOF_NONWEAR -- Cleaned VEET distance dataset **dataVEET3** --> SAVE
+
+class Clouclip,Distance,Spectrum,Light output;
+```
